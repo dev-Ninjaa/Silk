@@ -1,7 +1,7 @@
 import { Category } from '@/app/types';
 import { CategoryStore } from './CategoryStore';
 
-const STORAGE_KEY = 'ditto-categories';
+const STORAGE_KEY = 'pulm-categories';
 
 export class LocalStorageCategoryStore implements CategoryStore {
   async loadCategories(): Promise<Category[]> {
