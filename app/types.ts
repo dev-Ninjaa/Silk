@@ -58,3 +58,9 @@ export interface Note {
 
 export type ViewMode = 'home' | 'library' | 'recent' | 'pins' | 'settings' | 'bin' | 'search';
 
+export interface DailyReflection {
+  date: string; // YYYY-MM-DD
+  text?: string;
+  noteIds: string[];
+}
+
