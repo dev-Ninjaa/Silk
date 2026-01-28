@@ -3,19 +3,29 @@ import { Block, BlockType, Coordinates, Note } from '../schema/types';
 import { generateId } from '../core/utils';
 import { Block as BlockComponent } from './Block';
 import { SlashMenu } from './SlashMenu';
+import { MentionMenu } from './MentionMenu';
 
 interface EditorProps {
   note: Note;
+  allNotes?: { id: string; title: string; isDeleted?: boolean }[];
   onUpdateTitle: (noteId: string, title: string) => void;
   onUpdateBlocks: (noteId: string, blocks: Block[]) => void;
+  onOpenNote?: (noteId: string) => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ note, onUpdateTitle, onUpdateBlocks }) => {
+export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTitle, onUpdateBlocks, onOpenNote }) => {
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
   
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<Coordinates>({ x: 0, y: 0 });
   const [menuTriggerIdx, setMenuTriggerIdx] = useState<number>(-1);
+
+  const [mentionMenuOpen, setMentionMenuOpen] = useState(false);
+  const [mentionMenuPosition, setMentionMenuPosition] = useState<Coordinates>({ x: 0, y: 0 });
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionStartPos, setMentionStartPos] = useState(0);
+
+  const availableNotes = allNotes.filter(n => n.id !== note.id && !n.isDeleted);
 
   const addBlock = (currentId: string) => {
     const newBlock: Block = { id: generateId(), type: 'text', content: '' };
@@ -29,6 +39,37 @@ export const Editor: React.FC<EditorProps> = ({ note, onUpdateTitle, onUpdateBlo
   const updateBlock = (id: string, content: string) => {
     const updatedBlocks = note.blocks.map(b => b.id === id ? { ...b, content } : b);
     onUpdateBlocks(note.id, updatedBlocks);
+
+    // Check for @ trigger only if mention menu is not already open
+    if (!mentionMenuOpen && focusedBlockId === id) {
+      const lastAtIndex = content.lastIndexOf('@');
+      if (lastAtIndex !== -1) {
+        const textAfterAt = content.slice(lastAtIndex + 1);
+        // Only trigger if there's no space after @ and we're at the end
+        if (!textAfterAt.includes(' ') && textAfterAt.length >= 0) {
+          setMentionQuery(textAfterAt);
+          setMentionStartPos(lastAtIndex);
+          
+          setTimeout(() => {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              const rect = range.getBoundingClientRect();
+              const editorRect = document.querySelector('.max-w-3xl')?.getBoundingClientRect();
+              
+              if (editorRect) {
+                setMentionMenuPosition({
+                  x: rect.left - editorRect.left,
+                  y: rect.top - editorRect.top
+                });
+                setMentionMenuOpen(true);
+              }
+            }
+          }, 0);
+          return; // Don't process slash if we're processing @
+        }
+      }
+    }
   };
 
   const changeBlockType = (type: BlockType) => {
@@ -51,28 +92,47 @@ export const Editor: React.FC<EditorProps> = ({ note, onUpdateTitle, onUpdateBlo
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
-    if (menuOpen) {
-       if (e.key === 'Escape') {
-         setMenuOpen(false);
-       }
-       return; 
+    // Handle mention menu separately
+    if (mentionMenuOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionMenuOpen(false);
+      }
+      // Let MentionMenu handle other keys
+      return;
     }
 
+    // Handle slash menu separately
+    if (menuOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMenuOpen(false);
+      }
+      // Let SlashMenu handle other keys
+      return; 
+    }
+
+    // Handle slash command trigger
     if (e.key === '/') {
-        setTimeout(() => {
-            const selection = window.getSelection();
-            if (selection && selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                
-                setMenuPosition({
-                    x: rect.left,
-                    y: rect.bottom + 5
-                });
-                setMenuOpen(true);
-            }
-        }, 0);
-    } else if (e.key === 'Enter') {
+      setTimeout(() => {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          const blockRect = (e.target as HTMLElement).getBoundingClientRect();
+          
+          setMenuPosition({
+            x: rect.left - blockRect.left,
+            y: rect.top - blockRect.top
+          });
+          setMenuOpen(true);
+        }
+      }, 0);
+      return;
+    }
+
+    // Handle other keys
+    if (e.key === 'Enter') {
       if (!e.shiftKey) {
         e.preventDefault();
         addBlock(id);
@@ -92,15 +152,60 @@ export const Editor: React.FC<EditorProps> = ({ note, onUpdateTitle, onUpdateBlo
   };
 
   useEffect(() => {
-    const handleClickOutside = () => setMenuOpen(false);
-    if (menuOpen) {
+    const handleClickOutside = () => {
+      setMenuOpen(false);
+      setMentionMenuOpen(false);
+    };
+    if (menuOpen || mentionMenuOpen) {
         window.addEventListener('click', handleClickOutside);
     }
     return () => window.removeEventListener('click', handleClickOutside);
-  }, [menuOpen]);
+  }, [menuOpen, mentionMenuOpen]);
+
+  const handleMentionSelect = (noteId: string, title: string) => {
+    if (!focusedBlockId) return;
+
+    const currentBlock = note.blocks.find(b => b.id === focusedBlockId);
+    if (!currentBlock) return;
+
+    // Replace @query with @title (keep the @ symbol)
+    const beforeMention = currentBlock.content.slice(0, mentionStartPos);
+    const afterMention = currentBlock.content.slice(mentionStartPos + 1 + mentionQuery.length);
+    const mentionText = '@' + title;
+    const newContent = beforeMention + mentionText + afterMention;
+
+    // Create mention metadata
+    const mention = {
+      noteId,
+      title: mentionText,
+      start: mentionStartPos,
+      end: mentionStartPos + mentionText.length
+    };
+
+    const updatedBlocks = note.blocks.map(b => {
+      if (b.id === focusedBlockId) {
+        const existingMentions = b.mentions || [];
+        return { 
+          ...b, 
+          content: newContent,
+          mentions: [...existingMentions, mention]
+        };
+      }
+      return b;
+    });
+
+    onUpdateBlocks(note.id, updatedBlocks);
+    setMentionMenuOpen(false);
+  };
+
+  const handleMentionClick = (noteId: string) => {
+    if (onOpenNote) {
+      onOpenNote(noteId);
+    }
+  };
 
   return (
-    <div className="max-w-3xl mx-auto px-12 py-16 pb-48">
+    <div className="max-w-3xl mx-auto px-12 py-16 pb-48 relative">
       <div className="mb-8 group">
         <input
           type="text"
@@ -121,6 +226,7 @@ export const Editor: React.FC<EditorProps> = ({ note, onUpdateTitle, onUpdateBlo
             onKeyDown={handleKeyDown}
             onFocus={setFocusedBlockId}
             onClick={setFocusedBlockId}
+            onMentionClick={handleMentionClick}
           />
         ))}
       </div>
@@ -132,9 +238,19 @@ export const Editor: React.FC<EditorProps> = ({ note, onUpdateTitle, onUpdateBlo
           onClose={() => setMenuOpen(false)} 
         />
       )}
+
+      {mentionMenuOpen && (
+        <MentionMenu
+          position={mentionMenuPosition}
+          notes={availableNotes}
+          query={mentionQuery}
+          onSelect={handleMentionSelect}
+          onClose={() => setMentionMenuOpen(false)}
+        />
+      )}
       
       <div className="fixed bottom-4 right-4 text-gray-400 text-xs font-mono">
-        Type '/' to trigger menu
+        Type '/' for commands, '@' to mention notes
       </div>
     </div>
   );

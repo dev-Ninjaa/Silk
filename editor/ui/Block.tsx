@@ -9,6 +9,7 @@ interface BlockProps {
   onKeyDown: (e: React.KeyboardEvent, id: string) => void;
   onFocus: (id: string) => void;
   onClick: (id: string) => void;
+  onMentionClick?: (noteId: string) => void;
 }
 
 export const Block: React.FC<BlockProps> = ({ 
@@ -17,7 +18,8 @@ export const Block: React.FC<BlockProps> = ({
   updateBlock, 
   onKeyDown, 
   onFocus,
-  onClick
+  onClick,
+  onMentionClick
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -27,11 +29,77 @@ export const Block: React.FC<BlockProps> = ({
     }
   }, [isFocused]);
 
+  useEffect(() => {
+    if (contentRef.current && !isFocused) {
+      renderContentWithMentions();
+    }
+  }, [block.content, block.mentions, isFocused]);
+
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const text = e.currentTarget.innerText;
-    if (text !== block.content) {
-      updateBlock(block.id, text);
+    updateBlock(block.id, text);
+  };
+
+  const renderContentWithMentions = () => {
+    if (!contentRef.current) return;
+    
+    if (!block.mentions || block.mentions.length === 0) {
+      contentRef.current.textContent = block.content;
+      return;
     }
+
+    const content = block.content;
+    const mentions = [...block.mentions].sort((a, b) => a.start - b.start);
+    const fragments: (string | { type: 'mention'; noteId: string; title: string })[] = [];
+    let lastIndex = 0;
+
+    mentions.forEach(mention => {
+      if (mention.start > lastIndex) {
+        fragments.push(content.slice(lastIndex, mention.start));
+      }
+      fragments.push({ type: 'mention', noteId: mention.noteId, title: mention.title });
+      lastIndex = mention.end;
+    });
+
+    if (lastIndex < content.length) {
+      fragments.push(content.slice(lastIndex));
+    }
+
+    contentRef.current.innerHTML = '';
+    fragments.forEach(fragment => {
+      if (typeof fragment === 'string') {
+        contentRef.current!.appendChild(document.createTextNode(fragment));
+      } else {
+        const span = document.createElement('span');
+        span.textContent = fragment.title;
+        span.style.color = '#2563eb';
+        span.style.fontWeight = '500';
+        span.style.cursor = 'pointer';
+        span.style.textDecoration = 'none';
+        span.contentEditable = 'false';
+        span.dataset.noteId = fragment.noteId;
+        
+        span.onmouseenter = () => {
+          span.style.color = '#1d4ed8';
+          span.style.textDecoration = 'underline';
+        };
+        
+        span.onmouseleave = () => {
+          span.style.color = '#2563eb';
+          span.style.textDecoration = 'none';
+        };
+        
+        span.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (onMentionClick) {
+            onMentionClick(fragment.noteId);
+          }
+        };
+        
+        contentRef.current!.appendChild(span);
+      }
+    });
   };
 
   const getStyles = () => {
@@ -97,6 +165,7 @@ export const Block: React.FC<BlockProps> = ({
             ${block.type === 'todo' ? 'line-through-peer-checked' : ''}
           `}
         >
+          {block.content}
         </div>
       )}
     </div>
