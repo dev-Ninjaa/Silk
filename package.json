@@ -1,0 +1,25 @@
+{
+  "name": "ditto-editor-nextjs",
+  "description": "A minimalist text editor featuring a slash command menu similar to Notion (Next.js)",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "lucide-react": "^0.563.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "~5.8.2"
+  }
+}
