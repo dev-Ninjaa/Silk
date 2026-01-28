@@ -1,7 +1,7 @@
 import { DailyReflection } from '@/app/types';
 import { ReflectionStore } from './ReflectionStore';
 
-const STORAGE_KEY = 'ditto-reflections';
+const STORAGE_KEY = 'pulm-reflections';
 
 export class LocalStorageReflectionStore implements ReflectionStore {
   async loadReflections(): Promise<DailyReflection[]> {
