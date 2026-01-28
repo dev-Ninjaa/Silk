@@ -1,7 +1,7 @@
 import { Note } from '@/app/types';
 import { NoteStore } from './NoteStore';
 
-const STORAGE_KEY = 'ditto-notes';
+const STORAGE_KEY = 'pulm-notes';
 
 export class LocalStorageNoteStore implements NoteStore {
   async loadNotes(): Promise<Note[]> {
