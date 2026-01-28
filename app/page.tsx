@@ -156,6 +156,16 @@ export default function Home() {
     setNotes(notes.filter(n => n.id !== noteId));
   };
 
+  const handleDeleteCategory = (categoryId: string) => {
+    const categoryNotes = notes.filter(n => n.categoryId === categoryId && !n.isDeleted);
+    if (categoryNotes.length === 0) {
+      setCategories(categories.filter(c => c.id !== categoryId));
+      if (selectedCategoryId === categoryId) {
+        setSelectedCategoryId(null);
+      }
+    }
+  };
+
   const getCurrentCategory = (): Category | undefined => {
     if (!currentNote) return undefined;
     return categories.find(c => c.id === currentNote.categoryId);
@@ -178,6 +188,8 @@ export default function Home() {
         onCreateCategory={handleCreateCategory}
         onCreateNote={handleCreateNote}
         onChangeView={handleChangeView}
+        onDeleteNote={handleDeleteNote}
+        onDeleteCategory={handleDeleteCategory}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
