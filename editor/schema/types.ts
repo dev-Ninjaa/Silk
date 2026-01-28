@@ -14,12 +14,20 @@ export type BlockType =
   | 'divider' 
   | 'table';
 
+export interface NoteMention {
+  noteId: string;
+  title: string;
+  start: number;
+  end: number;
+}
+
 export interface Block {
   id: string;
   type: BlockType;
   content: string;
   checked?: boolean;
   isOpen?: boolean;
+  mentions?: NoteMention[];
 }
 
 export interface MenuItem {
