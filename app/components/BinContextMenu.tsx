@@ -33,10 +33,15 @@ export const BinContextMenu: React.FC<BinContextMenuProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Delay adding the click listener to avoid immediate closure
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    
     document.addEventListener('keydown', handleEscape);
 
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
