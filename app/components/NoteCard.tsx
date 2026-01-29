@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Note, Category } from '@/app/types';
+import { Pin } from 'lucide-react';
 
 interface NoteCardProps {
   note: Note;
@@ -61,6 +62,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({
           </span>
           {category && (
             <span className="py-0.5 text-stone-500 truncate">{category.name}</span>
+          )}
+          {note.isPinned && (
+            <Pin size={10} className="text-stone-400 ml-auto flex-shrink-0" />
           )}
         </div>
         
