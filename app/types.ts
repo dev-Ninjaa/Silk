@@ -47,8 +47,17 @@ export interface Category {
   id: string;
   name: string;
   color: string;
+  icon?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface SubCategory {
+  id: string;
+  name: string;
+  categoryId: string;
+  icon?: string;
+  createdAt: Date;
 }
 
 export interface Note {
@@ -56,6 +65,7 @@ export interface Note {
   title: string;
   blocks: Block[];
   categoryId: string;
+  subCategoryId?: string;
   isPinned?: boolean;
   lastOpenedAt?: Date;
   createdAt: Date;
