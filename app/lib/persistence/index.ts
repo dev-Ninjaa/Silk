@@ -1,6 +1,8 @@
-export { NoteStore } from './NoteStore';
+export type { NoteStore } from './NoteStore';
 export { LocalStorageNoteStore } from './LocalStorageNoteStore';
-export { CategoryStore } from './CategoryStore';
+export type { CategoryStore } from './CategoryStore';
 export { LocalStorageCategoryStore } from './LocalStorageCategoryStore';
-export { ReflectionStore } from './ReflectionStore';
+export type { SubCategoryStore } from './SubCategoryStore';
+export { LocalStorageSubCategoryStore } from './LocalStorageSubCategoryStore';
+export type { ReflectionStore } from './ReflectionStore';
 export { LocalStorageReflectionStore } from './LocalStorageReflectionStore';

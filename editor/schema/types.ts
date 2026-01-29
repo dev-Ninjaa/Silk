@@ -47,8 +47,11 @@ export interface Note {
   id: string;
   title: string;
   blocks: Block[];
-  topicId: string;
-  subtopicId?: string;
+  categoryId: string;
+  isPinned?: boolean;
+  lastOpenedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  isDeleted?: boolean;
+  deletedAt?: Date;
 }

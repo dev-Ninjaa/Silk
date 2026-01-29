@@ -10,13 +10,15 @@ interface AllNotesViewProps {
   categories: Category[];
   onSelectNote: (noteId: string) => void;
   onDeleteNote: (noteId: string) => void;
+  onTogglePin: (noteId: string) => void;
 }
 
 export const AllNotesView: React.FC<AllNotesViewProps> = ({ 
   notes, 
   categories, 
   onSelectNote,
-  onDeleteNote
+  onDeleteNote,
+  onTogglePin
 }) => {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -71,12 +73,17 @@ export const AllNotesView: React.FC<AllNotesViewProps> = ({
         <NoteContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
+          isPinned={notes.find(n => n.id === contextMenu.noteId)?.isPinned}
           onOpen={() => {
             onSelectNote(contextMenu.noteId);
             setContextMenu(null);
           }}
           onDelete={() => {
             onDeleteNote(contextMenu.noteId);
+            setContextMenu(null);
+          }}
+          onTogglePin={() => {
+            onTogglePin(contextMenu.noteId);
             setContextMenu(null);
           }}
           onClose={() => setContextMenu(null)}

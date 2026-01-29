@@ -97,14 +97,14 @@ export const ReflectionSidebar: React.FC<ReflectionSidebarProps> = ({
   };
 
   return (
-    <div className="w-72 h-screen bg-stone-50 flex flex-col border-r border-stone-200">
-      <div className="p-6 pb-4">
-        <h2 className="text-sm font-medium text-stone-400 tracking-wide">
+    <div className="w-72 h-screen bg-stone-50 flex flex-col border-l border-stone-200">
+      <div className="p-6 pb-4 border-b border-stone-200">
+        <h2 className="text-sm font-medium text-stone-500 tracking-wide">
           Daily Reflections
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 space-y-8">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         {daysWithActivity.map(date => {
           const dayNotes = getNotesForDate(notes, date);
           const reflection = reflections.find(r => r.date === date);
@@ -112,7 +112,7 @@ export const ReflectionSidebar: React.FC<ReflectionSidebarProps> = ({
 
           return (
             <div key={date} className="space-y-3">
-              <div className="text-xs font-medium text-stone-500">
+              <div className="text-sm font-medium text-stone-700">
                 {formatDate(date)}
               </div>
 
@@ -128,18 +128,17 @@ export const ReflectionSidebar: React.FC<ReflectionSidebarProps> = ({
                       handleCancelEdit();
                     }
                   }}
-                  placeholder="Add a reflection..."
-                  className="w-full px-3 py-2 text-xs text-stone-600 bg-white border border-stone-200 rounded resize-none outline-none focus:border-stone-300"
-                  rows={3}
+                  placeholder="What did you explore today?"
+                  className="w-full px-3 py-2.5 text-sm text-stone-700 bg-white border border-stone-300 rounded-lg resize-none outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all min-h-[88px]"
                   autoFocus
                 />
               ) : (
                 <div
                   onClick={() => handleStartEdit(date)}
-                  className="text-xs text-stone-500 leading-relaxed cursor-text hover:text-stone-600 transition-colors"
+                  className="text-sm text-stone-600 leading-relaxed cursor-text hover:text-stone-700 transition-colors px-3 py-2.5 rounded-lg hover:bg-stone-100 min-h-[88px]"
                 >
                   {reflection?.text || (
-                    <span className="text-stone-400 italic">Add a reflection...</span>
+                    <span className="text-stone-400 italic">What did you explore today?</span>
                   )}
                 </div>
               )}
@@ -154,7 +153,7 @@ export const ReflectionSidebar: React.FC<ReflectionSidebarProps> = ({
                         onClick={() => onSelectNote(note.id)}
                         className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-stone-100 transition-colors group"
                       >
-                        <FileText size={12} className="text-stone-400 flex-shrink-0" />
+                        <div className="w-1 h-1 rounded-full bg-stone-300 flex-shrink-0" />
                         <span className="text-xs text-stone-600 truncate group-hover:text-stone-900">
                           {note.title}
                         </span>

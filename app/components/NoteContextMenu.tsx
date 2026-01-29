@@ -1,21 +1,25 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ExternalLink, Trash2 } from 'lucide-react';
+import { ExternalLink, Trash2, Pin, PinOff } from 'lucide-react';
 
 interface NoteContextMenuProps {
   x: number;
   y: number;
+  isPinned?: boolean;
   onOpen: () => void;
   onDelete: () => void;
+  onTogglePin?: () => void;
   onClose: () => void;
 }
 
 export const NoteContextMenu: React.FC<NoteContextMenuProps> = ({
   x,
   y,
+  isPinned = false,
   onOpen,
   onDelete,
+  onTogglePin,
   onClose
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -33,10 +37,15 @@ export const NoteContextMenu: React.FC<NoteContextMenuProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Delay adding the click listener to avoid immediate closure
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    
     document.addEventListener('keydown', handleEscape);
 
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
@@ -58,12 +67,24 @@ export const NoteContextMenu: React.FC<NoteContextMenuProps> = ({
         <ExternalLink size={14} />
         <span>Open</span>
       </button>
+      {onTogglePin && (
+        <button
+          onClick={() => {
+            onTogglePin();
+            onClose();
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+        >
+          {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+          <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+        </button>
+      )}
       <button
         onClick={() => {
           onDelete();
           onClose();
         }}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
       >
         <Trash2 size={14} />
         <span>Delete</span>

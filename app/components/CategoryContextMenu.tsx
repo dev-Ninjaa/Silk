@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit3, Palette, Sparkles } from 'lucide-react';
 
 interface CategoryContextMenuProps {
   x: number;
   y: number;
   onDelete: () => void;
+  onEdit: () => void;
   onClose: () => void;
   canDelete: boolean;
 }
@@ -15,6 +16,7 @@ export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
   x,
   y,
   onDelete,
+  onEdit,
   onClose,
   canDelete
 }) => {
@@ -33,10 +35,15 @@ export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Delay adding the click listener to avoid immediate closure
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    
     document.addEventListener('keydown', handleEscape);
 
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
@@ -50,6 +57,16 @@ export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
     >
       <button
         onClick={() => {
+          onEdit();
+          onClose();
+        }}
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-100 cursor-pointer"
+      >
+        <Edit3 size={14} />
+        <span>Edit Category</span>
+      </button>
+      <button
+        onClick={() => {
           if (canDelete) {
             onDelete();
             onClose();
@@ -58,7 +75,7 @@ export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
         disabled={!canDelete}
         className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
           canDelete 
-            ? 'text-stone-700 hover:bg-stone-100 cursor-pointer' 
+            ? 'text-red-600 hover:bg-red-50 cursor-pointer' 
             : 'text-stone-400 cursor-not-allowed'
         }`}
         title={!canDelete ? 'Delete all notes in this category first' : ''}

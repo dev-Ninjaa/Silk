@@ -3,19 +3,22 @@
 import React, { useState } from 'react';
 import { Note, Category } from '@/app/types';
 import { NoteContextMenu } from './NoteContextMenu';
+import { NoteCard } from './NoteCard';
 
 interface PinsViewProps {
   notes: Note[];
   categories: Category[];
   onSelectNote: (noteId: string) => void;
   onDeleteNote: (noteId: string) => void;
+  onTogglePin: (noteId: string) => void;
 }
 
 export const PinsView: React.FC<PinsViewProps> = ({ 
   notes, 
   categories, 
   onSelectNote,
-  onDeleteNote
+  onDeleteNote,
+  onTogglePin
 }) => {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -41,37 +44,21 @@ export const PinsView: React.FC<PinsViewProps> = ({
 
   return (
     <div className="h-full overflow-y-auto bg-white">
-      <div className="max-w-4xl mx-auto px-8 py-12">
+      <div className="max-w-7xl mx-auto px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Pins</h1>
         
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {pinnedNotes.map((note) => {
             const category = getCategoryForNote(note);
             
             return (
-              <div
+              <NoteCard
                 key={note.id}
+                note={note}
+                category={category}
                 onClick={() => onSelectNote(note.id)}
                 onContextMenu={(e) => handleContextMenu(e, note.id)}
-                className="p-4 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50 cursor-pointer transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-medium text-gray-900 truncate">
-                      {note.title}
-                    </h3>
-                    {category && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div 
-                          className="w-2 h-2 rounded-full" 
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className="text-xs text-stone-600">{category.name}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              />
             );
           })}
         </div>
@@ -87,12 +74,17 @@ export const PinsView: React.FC<PinsViewProps> = ({
         <NoteContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
+          isPinned={notes.find(n => n.id === contextMenu.noteId)?.isPinned}
           onOpen={() => {
             onSelectNote(contextMenu.noteId);
             setContextMenu(null);
           }}
           onDelete={() => {
             onDeleteNote(contextMenu.noteId);
+            setContextMenu(null);
+          }}
+          onTogglePin={() => {
+            onTogglePin(contextMenu.noteId);
             setContextMenu(null);
           }}
           onClose={() => setContextMenu(null)}
