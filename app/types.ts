@@ -21,6 +21,13 @@ export interface NoteMention {
   end: number;
 }
 
+export interface AssetMention {
+  assetId: string;
+  name: string;
+  start: number;
+  end: number;
+}
+
 export interface Block {
   id: string;
   type: BlockType;
@@ -28,6 +35,7 @@ export interface Block {
   checked?: boolean;
   isOpen?: boolean;
   mentions?: NoteMention[];
+  assetMentions?: AssetMention[];
 }
 
 export interface MenuItem {
@@ -74,6 +82,23 @@ export interface Note {
   deletedAt?: Date;
 }
 
+export type AssetType = 'pdf' | 'docx' | 'markdown' | 'image' | 'text' | 'link';
+
+export interface Asset {
+  id: string;
+  name: string;
+  type: AssetType;
+  categoryId: string;
+  subCategoryId?: string;
+  source: 
+    | { kind: 'file'; dataUrl: string }
+    | { kind: 'link'; url: string };
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+}
+
 export type ViewMode = 'home' | 'library' | 'recent' | 'pins' | 'settings' | 'bin' | 'search';
 
 export interface DailyReflection {
@@ -81,4 +106,3 @@ export interface DailyReflection {
   text?: string;
   noteIds: string[];
 }
-
