@@ -6,3 +6,5 @@ export type { SubCategoryStore } from './SubCategoryStore';
 export { LocalStorageSubCategoryStore } from './LocalStorageSubCategoryStore';
 export type { ReflectionStore } from './ReflectionStore';
 export { LocalStorageReflectionStore } from './LocalStorageReflectionStore';
+export type { AssetStore } from './AssetStore';
+export { LocalStorageAssetStore } from './LocalStorageAssetStore';
