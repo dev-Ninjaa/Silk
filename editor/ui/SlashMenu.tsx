@@ -42,8 +42,6 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      e.stopPropagation();
-
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
@@ -85,11 +83,10 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
   return (
     <div
       ref={menuRef}
-      className="slash-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px] overflow-y-auto"
+      className="slash-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px]"
       style={{
         top: position.y,
-        left: position.x,
-        transform: 'translateY(-100%) translateY(-10px)'
+        left: position.x
       }}
     >
       <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider bg-white sticky top-0 z-10">
