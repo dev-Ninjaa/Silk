@@ -11,14 +11,17 @@ import { SettingsModal } from "@/app/components/SettingsModal";
 import { FeedbackPanel } from "@/app/components/FeedbackPanel";
 import { BinView } from "@/app/components/BinView";
 import { CommandPalette } from "@/app/components/CommandPalette";
+import { AssetModal } from "@/app/components/AssetModal";
+import { AssetViewer } from "@/app/components/AssetViewer";
 import { defaultCategories } from "@/app/data/defaultCategories";
 import { defaultNotes } from "@/app/data/defaultNotes";
-import { Note, Block, Category, SubCategory, ViewMode, DailyReflection } from "@/app/types";
+import { Note, Block, Category, SubCategory, ViewMode, DailyReflection, Asset, AssetType } from "@/app/types";
 import { 
   NoteStore, LocalStorageNoteStore, 
   CategoryStore, LocalStorageCategoryStore, 
   SubCategoryStore, LocalStorageSubCategoryStore,
-  ReflectionStore, LocalStorageReflectionStore 
+  ReflectionStore, LocalStorageReflectionStore,
+  AssetStore, LocalStorageAssetStore
 } from "@/app/lib/persistence";
 import { useState, useEffect } from "react";
 
@@ -26,6 +29,7 @@ const noteStore: NoteStore = new LocalStorageNoteStore();
 const categoryStore: CategoryStore = new LocalStorageCategoryStore();
 const subCategoryStore: SubCategoryStore = new LocalStorageSubCategoryStore();
 const reflectionStore: ReflectionStore = new LocalStorageReflectionStore();
+const assetStore: AssetStore = new LocalStorageAssetStore();
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
 
@@ -33,6 +37,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [reflections, setReflections] = useState<DailyReflection[]>([]);
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -42,12 +47,16 @@ export default function Home() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isFeedbackPanelOpen, setIsFeedbackPanelOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [assetModalContext, setAssetModalContext] = useState<{ categoryId: string; subCategoryId?: string } | null>(null);
+  const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       const loadedCategories = await categoryStore.loadCategories();
       const loadedSubCategories = await subCategoryStore.loadSubCategories();
       const loadedNotes = await noteStore.loadNotes();
+      const loadedAssets = await assetStore.loadAssets();
       const loadedReflections = await reflectionStore.loadReflections();
 
       if (loadedCategories.length > 0) {
@@ -66,6 +75,7 @@ export default function Home() {
         await noteStore.saveNotes(defaultNotes);
       }
 
+      setAssets(loadedAssets);
       setReflections(loadedReflections);
       setIsLoaded(true);
     };
@@ -96,6 +106,12 @@ export default function Home() {
       reflectionStore.saveReflections(reflections);
     }
   }, [reflections, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      assetStore.saveAssets(assets);
+    }
+  }, [assets, isLoaded]);
 
   const currentNote = notes.find(n => n.id === currentNoteId);
 
@@ -164,6 +180,19 @@ export default function Home() {
             updatedAt: new Date() 
           }
         : n
+    ));
+  };
+
+  const handleMoveAsset = (assetId: string, targetCategoryId: string, targetSubCategoryId?: string) => {
+    setAssets(assets.map(a => 
+      a.id === assetId 
+        ? { 
+            ...a, 
+            categoryId: targetCategoryId, 
+            subCategoryId: targetSubCategoryId,
+            updatedAt: new Date() 
+          }
+        : a
     ));
   };
 
@@ -384,6 +413,122 @@ export default function Home() {
     }
   };
 
+  const handleOpenAssetModal = (categoryId: string, subCategoryId?: string) => {
+    setAssetModalContext({ categoryId, subCategoryId });
+    setIsAssetModalOpen(true);
+  };
+
+  const handleCreateAsset = (name: string, type: AssetType, source: { kind: 'file'; dataUrl: string } | { kind: 'link'; url: string }) => {
+    if (!assetModalContext) return;
+
+    const newAsset: Asset = {
+      id: `asset-${generateId()}`,
+      name,
+      type,
+      categoryId: assetModalContext.categoryId,
+      subCategoryId: assetModalContext.subCategoryId,
+      source,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    setAssets([...assets, newAsset]);
+  };
+
+  const handleOpenAsset = (assetId: string) => {
+    const asset = assets.find(a => a.id === assetId);
+    if (asset && !asset.isDeleted) {
+      setViewingAsset(asset);
+    }
+  };
+
+  const handleDeleteAsset = (assetId: string) => {
+    setAssets(assets.map(a => 
+      a.id === assetId 
+        ? { ...a, isDeleted: true, deletedAt: new Date(), updatedAt: new Date() }
+        : a
+    ));
+  };
+
+  const handleRestoreAsset = (assetId: string) => {
+    setAssets(assets.map(a => {
+      if (a.id !== assetId) return a;
+      
+      // Validate and repair category/sub-category references
+      let validCategoryId = a.categoryId;
+      let validSubCategoryId = a.subCategoryId;
+      
+      const categoryExists = categories.some(c => c.id === a.categoryId);
+      
+      if (!categoryExists) {
+        let uncategorizedCategory = categories.find(c => c.name === 'Uncategorized');
+        
+        if (!uncategorizedCategory) {
+          const newCategory: Category = {
+            id: `cat-uncategorized-${generateId()}`,
+            name: 'Uncategorized',
+            color: '#a8a29e',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          setCategories(prev => [...prev, newCategory]);
+          validCategoryId = newCategory.id;
+        } else {
+          validCategoryId = uncategorizedCategory.id;
+        }
+        
+        validSubCategoryId = undefined;
+      } else if (validSubCategoryId) {
+        const subCategoryExists = subCategories.some(
+          sc => sc.id === validSubCategoryId && sc.categoryId === validCategoryId
+        );
+        
+        if (!subCategoryExists) {
+          validSubCategoryId = undefined;
+        }
+      }
+      
+      return {
+        ...a,
+        categoryId: validCategoryId,
+        subCategoryId: validSubCategoryId,
+        isDeleted: false,
+        deletedAt: undefined,
+        updatedAt: new Date()
+      };
+    }));
+  };
+
+  const handleDeleteAssetForever = (assetId: string) => {
+    setAssets(assets.filter(a => a.id !== assetId));
+    
+    // Clean up asset mentions in notes
+    setNotes(notes.map(note => {
+      const hasAffectedMentions = note.blocks.some(block => 
+        block.assetMentions?.some(mention => mention.assetId === assetId)
+      );
+      
+      if (!hasAffectedMentions) {
+        return note;
+      }
+      
+      const updatedBlocks = note.blocks.map(block => {
+        if (!block.assetMentions || block.assetMentions.length === 0) {
+          return block;
+        }
+        
+        const filteredMentions = block.assetMentions.filter(mention => mention.assetId !== assetId);
+        
+        if (filteredMentions.length !== block.assetMentions.length) {
+          return { ...block, assetMentions: filteredMentions };
+        }
+        
+        return block;
+      });
+      
+      return { ...note, blocks: updatedBlocks, updatedAt: new Date() };
+    }));
+  };
+
   if (!isLoaded) {
     return null;
   }
@@ -395,6 +540,7 @@ export default function Home() {
         categories={categories}
         subCategories={subCategories}
         notes={notes}
+        assets={assets}
         currentNoteId={currentNoteId}
         selectedCategoryId={selectedCategoryId}
         selectedSubCategoryId={selectedSubCategoryId}
@@ -412,7 +558,11 @@ export default function Home() {
         onDeleteSubCategory={handleDeleteSubCategory}
         onTogglePin={handleTogglePin}
         onMoveNote={handleMoveNote}
+        onMoveAsset={handleMoveAsset}
         onOpenFeedback={() => setIsFeedbackPanelOpen(true)}
+        onOpenAsset={handleOpenAsset}
+        onDeleteAsset={handleDeleteAsset}
+        onOpenAssetModal={handleOpenAssetModal}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -431,10 +581,23 @@ export default function Home() {
               {currentNote && (
                 <Editor 
                   note={currentNote}
-                  allNotes={notes.map(n => ({ id: n.id, title: n.title, isDeleted: n.isDeleted }))}
+                  allNotes={[
+                    ...notes.map(n => ({ id: n.id, title: n.title, isDeleted: n.isDeleted })),
+                    ...assets.filter(a => !a.isDeleted).map(a => ({ 
+                      id: a.id, 
+                      title: `📎 ${a.name}`,
+                      isDeleted: false 
+                    }))
+                  ]}
                   onUpdateTitle={handleUpdateTitle}
                   onUpdateBlocks={handleUpdateBlocks}
-                  onOpenNote={handleSelectNote}
+                  onOpenNote={(id) => {
+                    if (id.startsWith('asset-')) {
+                      handleOpenAsset(id);
+                    } else {
+                      handleSelectNote(id);
+                    }
+                  }}
                 />
               )}
             </div>
@@ -485,9 +648,12 @@ export default function Home() {
             <TopBar viewMode={viewMode} />
             <BinView 
               notes={notes}
+              assets={assets}
               categories={categories}
               onRestore={handleRestoreNote}
               onDeleteForever={handleDeleteForever}
+              onRestoreAsset={handleRestoreAsset}
+              onDeleteAssetForever={handleDeleteAssetForever}
             />
           </>
         )}
@@ -506,6 +672,7 @@ export default function Home() {
         onClose={() => setIsSettingsModalOpen(false)}
         notesCount={notes.filter(n => !n.isDeleted).length}
         categoriesCount={categories.length}
+        assetsCount={assets.filter(a => !a.isDeleted).length}
       />
 
       <FeedbackPanel
@@ -519,6 +686,22 @@ export default function Home() {
         categories={categories}
         onClose={() => setIsCommandPaletteOpen(false)}
         onSelectNote={handleSelectNote}
+      />
+
+      <AssetModal
+        isOpen={isAssetModalOpen}
+        onClose={() => {
+          setIsAssetModalOpen(false);
+          setAssetModalContext(null);
+        }}
+        onSave={handleCreateAsset}
+        categoryName={assetModalContext ? categories.find(c => c.id === assetModalContext.categoryId)?.name || '' : ''}
+        subCategoryName={assetModalContext?.subCategoryId ? subCategories.find(sc => sc.id === assetModalContext.subCategoryId)?.name : undefined}
+      />
+
+      <AssetViewer
+        asset={viewingAsset}
+        onClose={() => setViewingAsset(null)}
       />
     </div>
   );
