@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  Type, 
-  Heading1, 
-  Heading2, 
-  Heading3, 
-  List, 
-  ListOrdered, 
-  CheckSquare, 
-  ChevronRight, 
-  Table as TableIcon, 
-  Quote, 
-  Code, 
-  Minus 
+import {
+  Type,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  CheckSquare,
+  ChevronRight,
+  Table as TableIcon,
+  Quote,
+  Code,
+  Minus
 } from 'lucide-react';
 import { MenuItem, BlockType, Coordinates } from '../schema/types';
 
@@ -43,7 +43,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       e.stopPropagation();
-      
+
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
@@ -83,11 +83,11 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
   }, [selectedIndex]);
 
   return (
-    <div 
+    <div
       ref={menuRef}
-      className="absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px] overflow-y-auto"
-      style={{ 
-        top: position.y, 
+      className="slash-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px] overflow-y-auto"
+      style={{
+        top: position.y,
         left: position.x,
         transform: 'translateY(-100%) translateY(-10px)'
       }}
@@ -104,28 +104,25 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
               key={item.id}
               onClick={() => onSelect(item.id)}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`flex items-center justify-between px-3 py-1.5 mx-1 rounded text-sm transition-colors duration-150 ${
-                isSelected 
-                  ? 'bg-blue-500 text-white' 
+              className={`flex items-center justify-between px-3 py-1.5 mx-1 rounded text-sm transition-colors duration-150 ${isSelected
+                  ? 'bg-blue-500 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-1 rounded border ${
-                    isSelected ? 'bg-transparent border-white/20' : 'bg-white border-gray-200'
+                <div className={`p-1 rounded border ${isSelected ? 'bg-transparent border-white/20' : 'bg-white border-gray-200'
                   }`}>
                   <item.icon size={16} className={isSelected ? 'text-white' : 'text-gray-600'} />
                 </div>
-                
+
                 <span className="font-medium">{item.label}</span>
               </div>
 
               {item.shortcut && (
-                <div className={`text-[10px] px-1 rounded border ${
-                   isSelected 
-                    ? 'text-blue-100 border-white/30' 
+                <div className={`text-[10px] px-1 rounded border ${isSelected
+                    ? 'text-blue-100 border-white/30'
                     : 'text-gray-400 border-gray-200'
-                }`}>
+                  }`}>
                   {item.shortcut}
                 </div>
               )}

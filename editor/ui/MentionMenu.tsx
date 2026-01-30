@@ -15,17 +15,17 @@ interface MentionMenuProps {
   onClose: () => void;
 }
 
-export const MentionMenu: React.FC<MentionMenuProps> = ({ 
-  position, 
-  notes, 
+export const MentionMenu: React.FC<MentionMenuProps> = ({
+  position,
+  notes,
   query,
-  onSelect, 
-  onClose 
+  onSelect,
+  onClose
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const filteredNotes = notes.filter(note => 
+  const filteredNotes = notes.filter(note =>
     note.title.toLowerCase().includes(query.toLowerCase())
   );
 
@@ -36,7 +36,7 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       e.stopPropagation();
-      
+
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
@@ -79,10 +79,10 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
 
   if (filteredNotes.length === 0) {
     return (
-      <div 
-        className="absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
-        style={{ 
-          top: position.y, 
+      <div
+        className="mention-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
+        style={{
+          top: position.y,
           left: position.x,
           transform: 'translateY(-100%) translateY(-10px)'
         }}
@@ -98,11 +98,11 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
   }
 
   return (
-    <div 
+    <div
       ref={menuRef}
-      className="absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px] overflow-y-auto"
-      style={{ 
-        top: position.y, 
+      className="mention-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px] overflow-y-auto"
+      style={{
+        top: position.y,
         left: position.x,
         transform: 'translateY(-100%) translateY(-10px)'
       }}
@@ -119,18 +119,16 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
               key={note.id}
               onClick={() => onSelect(note.id, note.title)}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`flex items-center gap-3 px-3 py-1.5 mx-1 rounded text-sm transition-colors duration-150 ${
-                isSelected 
-                  ? 'bg-blue-500 text-white' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`flex items-center gap-3 px-3 py-1.5 mx-1 rounded text-sm transition-colors duration-150 ${isSelected
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+                }`}
             >
-              <div className={`p-1 rounded border ${
-                  isSelected ? 'bg-transparent border-white/20' : 'bg-white border-gray-200'
+              <div className={`p-1 rounded border ${isSelected ? 'bg-transparent border-white/20' : 'bg-white border-gray-200'
                 }`}>
                 <FileText size={16} className={isSelected ? 'text-white' : 'text-gray-600'} />
               </div>
-              
+
               <span className="font-medium truncate">{note.title}</span>
             </button>
           );
