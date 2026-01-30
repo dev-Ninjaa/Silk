@@ -135,13 +135,15 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
         if (selection && selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
           const rect = range.getBoundingClientRect();
-          const blockRect = (e.target as HTMLElement).getBoundingClientRect();
+          const editorRect = document.querySelector('.max-w-3xl')?.getBoundingClientRect();
 
-          setMenuPosition({
-            x: rect.left - blockRect.left,
-            y: rect.top - blockRect.top
-          });
-          setMenuOpen(true);
+          if (editorRect) {
+            setMenuPosition({
+              x: rect.left - editorRect.left,
+              y: rect.bottom - editorRect.top + 10
+            });
+            setMenuOpen(true);
+          }
         }
       }, 0);
       return;
