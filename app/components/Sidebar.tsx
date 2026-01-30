@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Category, SubCategory, Note, ViewMode } from '@/app/types';
-import { FileText, Plus, FolderPlus, Home, Clock, Pin, Library, Settings, Trash2, Search, Folder, BookOpen, Briefcase, Heart, Star, Lightbulb, Coffee, Music } from 'lucide-react';
+import { FileText, Plus, FolderPlus, Home, Clock, Pin, Library, Settings, Trash2, Search, Folder, BookOpen, Briefcase, Heart, Star, Lightbulb, Coffee, Music, MessageSquare } from 'lucide-react';
 import { NoteContextMenu } from './NoteContextMenu';
 import { CategoryContextMenu } from './CategoryContextMenu';
 import { SubCategoryContextMenu } from './SubCategoryContextMenu';
@@ -31,6 +31,7 @@ interface SidebarProps {
   onDeleteSubCategory: (subCategoryId: string) => void;
   onTogglePin: (noteId: string) => void;
   onMoveNote: (noteId: string, targetCategoryId: string, targetSubCategoryId?: string) => void;
+  onOpenFeedback: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -54,7 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDeleteCategory,
   onDeleteSubCategory,
   onTogglePin,
-  onMoveNote
+  onMoveNote,
+  onOpenFeedback
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(categories.map(c => c.id)));
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -531,6 +533,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <Search size={16} />
               <span>Search</span>
+            </button>
+            
+            <button
+              onClick={onOpenFeedback}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors text-stone-600 hover:bg-stone-200"
+            >
+              <MessageSquare size={16} />
+              <span>Feedback</span>
             </button>
             
             <button

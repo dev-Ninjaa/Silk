@@ -13,19 +13,27 @@ interface ReflectionSidebarProps {
 }
 
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return dateStr; // Return original if invalid
+    }
+    
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
-  const isToday = date.toDateString() === today.toDateString();
-  const isYesterday = date.toDateString() === yesterday.toDateString();
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
 
-  const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-  if (isToday) return `Today · ${monthDay}`;
-  if (isYesterday) return `Yesterday · ${monthDay}`;
-  return monthDay;
+    if (isToday) return `Today · ${monthDay}`;
+    if (isYesterday) return `Yesterday · ${monthDay}`;
+    return monthDay;
+  } catch (error) {
+    return dateStr; // Return original if error
+  }
 };
 
 const getDaysWithActivity = (notes: Note[]): string[] => {
@@ -34,19 +42,46 @@ const getDaysWithActivity = (notes: Note[]): string[] => {
   notes.forEach(note => {
     if (note.isDeleted) return;
     
-    if (note.lastOpenedAt) {
-      const date = new Date(note.lastOpenedAt).toISOString().split('T')[0];
-      datesSet.add(date);
-    }
-    
-    if (note.updatedAt) {
-      const date = new Date(note.updatedAt).toISOString().split('T')[0];
-      datesSet.add(date);
-    }
-    
-    if (note.createdAt) {
-      const date = new Date(note.createdAt).toISOString().split('T')[0];
-      datesSet.add(date);
+    try {
+      if (note.lastOpenedAt) {
+        const date = note.lastOpenedAt instanceof Date 
+          ? note.lastOpenedAt 
+          : new Date(note.lastOpenedAt);
+        if (!isNaN(date.getTime())) {
+          // Use local date string to avoid timezone issues
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          datesSet.add(`${year}-${month}-${day}`);
+        }
+      }
+      
+      if (note.updatedAt) {
+        const date = note.updatedAt instanceof Date 
+          ? note.updatedAt 
+          : new Date(note.updatedAt);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          datesSet.add(`${year}-${month}-${day}`);
+        }
+      }
+      
+      if (note.createdAt) {
+        const date = note.createdAt instanceof Date 
+          ? note.createdAt 
+          : new Date(note.createdAt);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          datesSet.add(`${year}-${month}-${day}`);
+        }
+      }
+    } catch (error) {
+      // Skip invalid dates
+      console.warn('Invalid date in note:', note.id, error);
     }
   });
 
@@ -57,8 +92,20 @@ const getNotesForDate = (notes: Note[], dateStr: string): Note[] => {
   return notes.filter(note => {
     if (note.isDeleted) return false;
     
-    const noteDate = (date: Date | undefined) => 
-      date ? new Date(date).toISOString().split('T')[0] : null;
+    const noteDate = (date: Date | undefined) => {
+      if (!date) return null;
+      try {
+        const d = date instanceof Date ? date : new Date(date);
+        if (isNaN(d.getTime())) return null;
+        // Use local date string to avoid timezone issues
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } catch {
+        return null;
+      }
+    };
     
     return (
       noteDate(note.lastOpenedAt) === dateStr ||

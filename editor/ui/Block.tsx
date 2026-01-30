@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { Block as BlockType } from '../schema/types';
 import { ChevronRight, GripVertical } from 'lucide-react';
 
@@ -12,16 +12,25 @@ interface BlockProps {
   onMentionClick?: (noteId: string) => void;
 }
 
-export const Block: React.FC<BlockProps> = ({ 
-  block, 
-  isFocused, 
-  updateBlock, 
-  onKeyDown, 
+export const Block: React.FC<BlockProps> = ({
+  block,
+  isFocused,
+  updateBlock,
+  onKeyDown,
   onFocus,
   onClick,
   onMentionClick
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const isTypingRef = useRef(false);
+  const prevMentionsLengthRef = useRef(block.mentions?.length || 0);
+
+  // Set initial content on mount
+  useEffect(() => {
+    if (contentRef.current && block.content) {
+      contentRef.current.textContent = block.content;
+    }
+  }, []); // Only run on mount
 
   useEffect(() => {
     if (isFocused && contentRef.current) {
@@ -29,20 +38,45 @@ export const Block: React.FC<BlockProps> = ({
     }
   }, [isFocused]);
 
+  // Render mentions when they change OR when unfocused
   useEffect(() => {
-    if (contentRef.current && !isFocused) {
+    if (!contentRef.current) return;
+
+    const currentMentionsLength = block.mentions?.length || 0;
+    const prevMentionsLength = prevMentionsLengthRef.current;
+
+    // Only re-render if:
+    // 1. We're not focused (display mode)
+    // 2. OR a new mention was just added (mentions length increased)
+    if (!isFocused) {
       renderContentWithMentions();
+    } else if (currentMentionsLength > prevMentionsLength) {
+      // A new mention was added - render it and place cursor at end
+      renderContentWithMentions();
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(contentRef.current);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
     }
+
+    prevMentionsLengthRef.current = currentMentionsLength;
   }, [block.content, block.mentions, isFocused]);
 
-  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+  const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
+    isTypingRef.current = true;
     const text = e.currentTarget.innerText;
     updateBlock(block.id, text);
-  };
+    // Reset typing flag after state update
+    requestAnimationFrame(() => {
+      isTypingRef.current = false;
+    });
+  }, [block.id, updateBlock]);
 
   const renderContentWithMentions = () => {
     if (!contentRef.current) return;
-    
+
     if (!block.mentions || block.mentions.length === 0) {
       contentRef.current.textContent = block.content;
       return;
@@ -78,17 +112,17 @@ export const Block: React.FC<BlockProps> = ({
         span.style.textDecoration = 'none';
         span.contentEditable = 'false';
         span.dataset.noteId = fragment.noteId;
-        
+
         span.onmouseenter = () => {
           span.style.color = '#1d4ed8';
           span.style.textDecoration = 'underline';
         };
-        
+
         span.onmouseleave = () => {
           span.style.color = '#2563eb';
           span.style.textDecoration = 'none';
         };
-        
+
         span.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -96,7 +130,7 @@ export const Block: React.FC<BlockProps> = ({
             onMentionClick(fragment.noteId);
           }
         };
-        
+
         contentRef.current!.appendChild(span);
       }
     });
@@ -123,7 +157,7 @@ export const Block: React.FC<BlockProps> = ({
 
   return (
     <div className="group relative flex items-start -ml-8 pl-8 py-0.5" onClick={() => onClick(block.id)}>
-      
+
       <div className="absolute left-0 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing text-gray-300">
         <GripVertical size={18} />
       </div>
@@ -131,7 +165,7 @@ export const Block: React.FC<BlockProps> = ({
       {block.type === 'bullet-list' && (
         <span className="mr-2 text-2xl leading-6 text-gray-800">•</span>
       )}
-      
+
       {block.type === 'numbered-list' && (
         <span className="mr-2 font-medium text-gray-600 select-none">1.</span>
       )}
@@ -144,7 +178,7 @@ export const Block: React.FC<BlockProps> = ({
 
       {block.type === 'toggle' && (
         <span className="mr-2 mt-1 text-gray-500">
-            <ChevronRight size={16} />
+          <ChevronRight size={16} />
         </span>
       )}
 
@@ -164,9 +198,7 @@ export const Block: React.FC<BlockProps> = ({
             ${getStyles()}
             ${block.type === 'todo' ? 'line-through-peer-checked' : ''}
           `}
-        >
-          {block.content}
-        </div>
+        />
       )}
     </div>
   );

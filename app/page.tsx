@@ -8,6 +8,7 @@ import { AllNotesView } from "@/app/components/AllNotesView";
 import { RecentView } from "@/app/components/RecentView";
 import { PinsView } from "@/app/components/PinsView";
 import { SettingsModal } from "@/app/components/SettingsModal";
+import { FeedbackPanel } from "@/app/components/FeedbackPanel";
 import { BinView } from "@/app/components/BinView";
 import { CommandPalette } from "@/app/components/CommandPalette";
 import { defaultCategories } from "@/app/data/defaultCategories";
@@ -39,6 +40,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>('home');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isFeedbackPanelOpen, setIsFeedbackPanelOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
@@ -184,17 +186,21 @@ export default function Home() {
   };
 
   const handleSelectNote = (noteId: string) => {
-    setCurrentNoteId(noteId);
     const note = notes.find(n => n.id === noteId);
-    if (note) {
-      setSelectedCategoryId(note.categoryId);
-      setSelectedSubCategoryId(note.subCategoryId || null);
-      setNotes(notes.map(n => 
-        n.id === noteId 
-          ? { ...n, lastOpenedAt: new Date() }
-          : n
-      ));
+    
+    // Don't open deleted notes
+    if (!note || note.isDeleted) {
+      return;
     }
+    
+    setCurrentNoteId(noteId);
+    setSelectedCategoryId(note.categoryId);
+    setSelectedSubCategoryId(note.subCategoryId || null);
+    setNotes(notes.map(n => 
+      n.id === noteId 
+        ? { ...n, lastOpenedAt: new Date() }
+        : n
+    ));
     setViewMode('library');
   };
 
@@ -288,7 +294,35 @@ export default function Home() {
   };
 
   const handleDeleteForever = (noteId: string) => {
-    setNotes(notes.filter(n => n.id !== noteId));
+    // Remove the note and clean up all mentions of it in other notes
+    setNotes(notes.filter(n => n.id !== noteId).map(note => {
+      // Check if this note has any blocks with mentions
+      const hasAffectedMentions = note.blocks.some(block => 
+        block.mentions?.some(mention => mention.noteId === noteId)
+      );
+      
+      if (!hasAffectedMentions) {
+        return note;
+      }
+      
+      // Clean up mentions of the deleted note
+      const updatedBlocks = note.blocks.map(block => {
+        if (!block.mentions || block.mentions.length === 0) {
+          return block;
+        }
+        
+        const filteredMentions = block.mentions.filter(mention => mention.noteId !== noteId);
+        
+        // If mentions were removed, update the block
+        if (filteredMentions.length !== block.mentions.length) {
+          return { ...block, mentions: filteredMentions };
+        }
+        
+        return block;
+      });
+      
+      return { ...note, blocks: updatedBlocks, updatedAt: new Date() };
+    }));
   };
 
   const handleDeleteCategory = (categoryId: string) => {
@@ -378,6 +412,7 @@ export default function Home() {
         onDeleteSubCategory={handleDeleteSubCategory}
         onTogglePin={handleTogglePin}
         onMoveNote={handleMoveNote}
+        onOpenFeedback={() => setIsFeedbackPanelOpen(true)}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -471,6 +506,11 @@ export default function Home() {
         onClose={() => setIsSettingsModalOpen(false)}
         notesCount={notes.filter(n => !n.isDeleted).length}
         categoriesCount={categories.length}
+      />
+
+      <FeedbackPanel
+        isOpen={isFeedbackPanelOpen}
+        onClose={() => setIsFeedbackPanelOpen(false)}
       />
 
       <CommandPalette
