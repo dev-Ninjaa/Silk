@@ -69,6 +69,8 @@ export const AssetModal: React.FC<AssetModalProps> = ({
     if (ext === 'md' || ext === 'markdown') return 'markdown';
     if (ext === 'txt') return 'text';
     if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) return 'image';
+    if (['mp4', 'webm', 'ogg', 'mov'].includes(ext || '')) return 'video';
+    if (['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext || '')) return 'audio';
     return 'text';
   };
 
@@ -180,11 +182,11 @@ export const AssetModal: React.FC<AssetModalProps> = ({
                   ref={fileInputRef}
                   type="file"
                   onChange={handleFileChange}
-                  accept=".pdf,.docx,.doc,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp,.gif"
+                  accept=".pdf,.docx,.doc,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.ogg,.mov,.mp3,.wav,.m4a,.aac"
                   className="w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200 cursor-pointer"
                 />
                 <p className="mt-2 text-xs text-stone-500">
-                  Supported: PDF, DOCX, Markdown, Text, Images (Max 20MB)
+                  Supported: PDF, DOCX, Markdown, Text, Images, Videos, Audio (Max 20MB)
                 </p>
               </div>
 
