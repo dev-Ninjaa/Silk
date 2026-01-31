@@ -100,6 +100,35 @@ export const AssetViewer: React.FC<AssetViewerProps> = ({ asset, onClose }) => {
           </div>
         );
 
+      case 'video':
+        return (
+          <div className="flex items-center justify-center h-full p-8 bg-stone-50">
+            <video
+              src={asset.source.dataUrl}
+              controls
+              className="max-w-full max-h-full rounded-lg"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        );
+
+      case 'audio':
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-8 bg-stone-50">
+            <div className="w-full max-w-2xl">
+              <p className="text-lg font-medium text-stone-900 mb-4 text-center">{asset.name}</p>
+              <audio
+                src={asset.source.dataUrl}
+                controls
+                className="w-full"
+              >
+                Your browser does not support the audio tag.
+              </audio>
+            </div>
+          </div>
+        );
+
       case 'markdown':
       case 'text':
         return <MarkdownTextViewer dataUrl={asset.source.dataUrl} type={asset.type} />;
