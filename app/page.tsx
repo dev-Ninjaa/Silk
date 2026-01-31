@@ -1,6 +1,5 @@
 'use client';
 
-import { Editor } from "@/editor";
 import { Sidebar } from "@/app/components/Sidebar";
 import { ReflectionSidebar } from "@/app/components/ReflectionSidebar";
 import { TopBar } from "@/app/components/TopBar";
@@ -13,6 +12,7 @@ import { BinView } from "@/app/components/BinView";
 import { CommandPalette } from "@/app/components/CommandPalette";
 import { AssetModal } from "@/app/components/AssetModal";
 import { AssetViewer } from "@/app/components/AssetViewer";
+import { NoteView } from "@/app/components/NoteView";
 import { defaultCategories } from "@/app/data/defaultCategories";
 import { defaultNotes } from "@/app/data/defaultNotes";
 import { Note, Block, Category, SubCategory, ViewMode, DailyReflection, Asset, AssetType } from "@/app/types";
@@ -579,7 +579,7 @@ export default function Home() {
             
             <div className="flex-1 overflow-y-auto cursor-text">
               {currentNote && (
-                <Editor 
+                <NoteView 
                   note={currentNote}
                   allNotes={[
                     ...notes.map(n => ({ id: n.id, title: n.title, isDeleted: n.isDeleted })),
@@ -589,6 +589,7 @@ export default function Home() {
                       isDeleted: false 
                     }))
                   ]}
+                  assets={assets.filter(a => !a.isDeleted)}
                   onUpdateTitle={handleUpdateTitle}
                   onUpdateBlocks={handleUpdateBlocks}
                   onOpenNote={(id) => {
