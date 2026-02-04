@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { Note, Block, Asset } from '@/app/types';
 import { Editor } from '@/editor';
 import { RichContentRenderer } from './RichContentRenderer';
-import { Eye, Edit3 } from 'lucide-react';
 
 interface NoteViewProps {
   note: Note;
   allNotes?: { id: string; title: string; isDeleted?: boolean }[];
   assets?: Asset[]; // Add assets prop
+  isReadMode?: boolean;
   onUpdateTitle: (noteId: string, title: string) => void;
   onUpdateBlocks: (noteId: string, blocks: Block[]) => void;
   onOpenNote?: (noteId: string) => void;
@@ -25,11 +25,11 @@ export const NoteView: React.FC<NoteViewProps> = ({
   note,
   allNotes,
   assets = [],
+  isReadMode = false,
   onUpdateTitle,
   onUpdateBlocks,
   onOpenNote
 }) => {
-  const [isReadMode, setIsReadMode] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -90,13 +90,6 @@ export const NoteView: React.FC<NoteViewProps> = ({
             </div>
           </div>
         )}
-        <button
-          onClick={() => setIsReadMode(true)}
-          className="fixed bottom-20 right-4 p-3 bg-stone-800 text-white rounded-full hover:bg-stone-900 transition-colors shadow-lg z-50"
-          title="Switch to read mode"
-        >
-          <Eye size={18} />
-        </button>
       </div>
     );
   }
@@ -122,14 +115,6 @@ export const NoteView: React.FC<NoteViewProps> = ({
           ))}
         </div>
       </div>
-
-      <button
-        onClick={() => setIsReadMode(false)}
-        className="fixed bottom-20 right-4 p-3 bg-stone-800 text-white rounded-full hover:bg-stone-900 transition-colors shadow-lg z-50"
-        title="Switch to edit mode"
-      >
-        <Edit3 size={18} />
-      </button>
     </>
   );
 };
