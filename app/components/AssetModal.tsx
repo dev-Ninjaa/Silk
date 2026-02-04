@@ -124,25 +124,25 @@ export const AssetModal: React.FC<AssetModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div 
         className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm"
         onClick={onClose}
       />
       
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-stone-900">Add Asset</h2>
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-200 flex-shrink-0">
+          <h2 className="text-base sm:text-lg font-semibold text-stone-900">Add Asset</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-stone-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-stone-100 rounded-lg transition-colors flex-shrink-0"
           >
             <X size={18} className="text-stone-500" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          <div className="text-sm text-stone-600">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+          <div className="text-xs sm:text-sm text-stone-600">
             Adding to: <span className="font-medium text-stone-900">{categoryName}</span>
             {subCategoryName && <span> / {subCategoryName}</span>}
           </div>
@@ -150,32 +150,32 @@ export const AssetModal: React.FC<AssetModalProps> = ({
           <div className="flex gap-2">
             <button
               onClick={() => setMode('file')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                 mode === 'file'
                   ? 'bg-stone-900 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              <Upload size={16} className="inline mr-2" />
-              File
+              <Upload size={14} className="inline mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">File</span>
             </button>
             <button
               onClick={() => setMode('link')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                 mode === 'link'
                   ? 'bg-stone-900 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              <LinkIcon size={16} className="inline mr-2" />
-              Link
+              <LinkIcon size={14} className="inline mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Link</span>
             </button>
           </div>
 
           {mode === 'file' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2">
                   Select File
                 </label>
                 <input
@@ -183,16 +183,16 @@ export const AssetModal: React.FC<AssetModalProps> = ({
                   type="file"
                   onChange={handleFileChange}
                   accept=".pdf,.docx,.doc,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.ogg,.mov,.mp3,.wav,.m4a,.aac"
-                  className="w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200 cursor-pointer"
+                  className="w-full text-xs sm:text-sm text-stone-600 file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200 cursor-pointer"
                 />
-                <p className="mt-2 text-xs text-stone-500">
+                <p className="mt-2 text-[11px] sm:text-xs text-stone-500">
                   Supported: PDF, DOCX, Markdown, Text, Images, Videos, Audio (Max 20MB)
                 </p>
               </div>
 
               {selectedFile && (
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2">
                     Asset Name
                   </label>
                   <input
@@ -201,7 +201,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Asset name"
-                    className="w-full px-4 py-3 text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
                   />
                 </div>
               )}
@@ -211,7 +211,7 @@ export const AssetModal: React.FC<AssetModalProps> = ({
           {mode === 'link' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2">
                   URL
                 </label>
                 <input
@@ -221,12 +221,12 @@ export const AssetModal: React.FC<AssetModalProps> = ({
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="https://example.com"
-                  className="w-full px-4 py-3 text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2">
                   Display Name (Optional)
                 </label>
                 <input
@@ -235,24 +235,24 @@ export const AssetModal: React.FC<AssetModalProps> = ({
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Leave empty to use URL"
-                  className="w-full px-4 py-3 text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
                 />
               </div>
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-3 px-6 py-4 bg-stone-50 border-t border-stone-200 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-stone-50 border-t border-stone-200 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Add Asset
           </button>

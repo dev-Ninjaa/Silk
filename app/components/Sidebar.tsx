@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Category, SubCategory, Note, ViewMode, Asset } from '@/app/types';
-import { FileText, Plus, FolderPlus, Home, Clock, Pin, Library, Settings, Trash2, Search, Folder, BookOpen, Briefcase, Heart, Star, Lightbulb, Coffee, Music, MessageSquare, File, Link as LinkIcon, Image, FileCode } from 'lucide-react';
+import { FileText, Plus, FolderPlus, Home, Clock, Pin, Library, Settings, Trash2, Search, Folder, BookOpen, Briefcase, Heart, Star, Lightbulb, Coffee, Music, MessageSquare, File, Link as LinkIcon, Image, FileCode, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NoteContextMenu } from './NoteContextMenu';
 import { CategoryContextMenu } from './CategoryContextMenu';
 import { SubCategoryContextMenu } from './SubCategoryContextMenu';
@@ -38,6 +38,7 @@ interface SidebarProps {
   onOpenAsset: (assetId: string) => void;
   onDeleteAsset: (assetId: string) => void;
   onOpenAssetModal: (categoryId: string, subCategoryId?: string) => void;
+  onOpenCategoryCreateModal: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -67,7 +68,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenFeedback,
   onOpenAsset,
   onDeleteAsset,
-  onOpenAssetModal
+  onOpenAssetModal,
+  onOpenCategoryCreateModal
 }) => {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(categories.map(c => c.id)));
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -356,6 +358,75 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setDragOverTarget(null);
   };
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Keyboard navigation state
+  const [keyboardNavIndex, setKeyboardNavIndex] = useState(0);
+  const [keyboardNavItems, setKeyboardNavItems] = useState<Array<{type: 'category' | 'subcategory' | 'note', id: string}>>([]);
+
+  // Build keyboard navigation items when in library mode
+  useEffect(() => {
+    if (viewMode === 'library') {
+      const items: Array<{type: 'category' | 'subcategory' | 'note', id: string}> = [];
+      
+      categories.forEach(category => {
+        items.push({ type: 'category', id: category.id });
+        
+        // Add category-level notes
+        const categoryNotes = getNotesForCategory(category.id);
+        categoryNotes.forEach(note => {
+          items.push({ type: 'note', id: note.id });
+        });
+        
+        // Add subcategories and their notes
+        const categorySubCategories = getSubCategoriesForCategory(category.id);
+        categorySubCategories.forEach(subCategory => {
+          items.push({ type: 'subcategory', id: subCategory.id });
+          
+          const subCategoryNotes = getNotesForCategory(category.id, subCategory.id);
+          subCategoryNotes.forEach(note => {
+            items.push({ type: 'note', id: note.id });
+          });
+        });
+      });
+      
+      setKeyboardNavItems(items);
+      setKeyboardNavIndex(0);
+    }
+  }, [viewMode, categories, subCategories, notes]);
+
+  // Keyboard navigation handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (viewMode !== 'library' || keyboardNavItems.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setKeyboardNavIndex(prev => 
+          prev < keyboardNavItems.length - 1 ? prev + 1 : prev
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setKeyboardNavIndex(prev => prev > 0 ? prev - 1 : 0);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const currentItem = keyboardNavItems[keyboardNavIndex];
+        if (currentItem) {
+          if (currentItem.type === 'category') {
+            onSelectCategory(currentItem.id);
+          } else if (currentItem.type === 'subcategory') {
+            onSelectSubCategory(currentItem.id);
+          } else if (currentItem.type === 'note') {
+            onSelectNote(currentItem.id);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [viewMode, keyboardNavItems, keyboardNavIndex]);
+
   const getIconComponent = (iconId?: string, withBackground: boolean = true) => {
     if (!iconId) return null;
     const iconMap: Record<string, any> = {
@@ -377,368 +448,184 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return <Icon size={11} className="text-stone-500" />;
   };
 
+  const getViewModeIcon = (mode: ViewMode) => {
+    const iconMap: Record<ViewMode, any> = {
+      home: Home,
+      recent: Clock,
+      pins: Pin,
+      library: Library,
+      settings: Settings,
+      bin: Trash2,
+      search: Search,
+    };
+    return iconMap[mode];
+  };
+
+  const getViewModeLabel = (mode: ViewMode) => {
+    const labelMap: Record<ViewMode, string> = {
+      home: 'All Notes',
+      recent: 'Recent',
+      pins: 'Pins',
+      library: 'Library',
+      settings: 'Settings',
+      bin: 'Bin',
+      search: 'Search',
+    };
+    return labelMap[mode];
+  };
+
   return (
-    <div className="w-64 h-screen bg-stone-100 flex flex-col border-r border-stone-200">
-      <div className="p-4 space-y-1">
+    <div className={`h-screen bg-white flex flex-col border-r border-stone-200 transition-all duration-300 ${sidebarOpen ? 'w-60 sm:w-64' : 'w-16 sm:w-20'}`}>
+      {/* Header with toggle button */}
+      <div className="flex items-center justify-between p-4 border-b border-stone-200">
+        {sidebarOpen && <h2 className="text-lg font-bold text-stone-900">Pulm</h2>}
         <button
-          onClick={() => onChangeView('home')}
-          className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors $
-{
-            viewMode === 'home' 
-              ? 'bg-stone-200 text-stone-900' 
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-1.5 hover:bg-stone-100 rounded-lg transition-colors flex-shrink-0"
+          title={sidebarOpen ? "Collapse" : "Expand"}
         >
-          <Home size={16} />
-          <span>All Notes</span>
-        </button>
-        
-        <button
-          onClick={() => onChangeView('recent')}
-          className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors ${
-            viewMode === 'recent' 
-              ? 'bg-stone-200 text-stone-900' 
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          <Clock size={16} />
-          <span>Recent</span>
-        </button>
-        
-        <button
-          onClick={() => onChangeView('pins')}
-          className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors ${
-            viewMode === 'pins' 
-              ? 'bg-stone-200 text-stone-900' 
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          <Pin size={16} />
-          <span>Pins</span>
-        </button>
-        
-        <button
-          onClick={() => onChangeView('library')}
-          className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors ${
-            viewMode === 'library' 
-              ? 'bg-stone-200 text-stone-900' 
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          <Library size={16} />
-          <span>Library</span>
+          {sidebarOpen ? (
+            <ChevronLeft size={18} className="text-stone-600" />
+          ) : (
+            <ChevronRight size={18} className="text-stone-600" />
+          )}
         </button>
       </div>
 
-      {viewMode === 'library' && (
-        <>
-          <div className="px-4 pt-2 pb-3">
-            <button
-              onClick={handleOpenCategoryCreateModal}
-              className="flex items-center gap-2 text-stone-600 text-sm font-medium px-2 py-1.5 hover:bg-stone-200 rounded cursor-pointer w-full transition-colors"
-            >
-              <FolderPlus size={16} />
-              <span>New category</span>
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
-            <div className="space-y-0.5">
-              {categories.map((category) => {
-                const isCategoryExpanded = expandedCategories.has(category.id);
-                const categoryNotes = getNotesForCategory(category.id);
-                const categorySubCategories = getSubCategoriesForCategory(category.id);
-                const isSelected = selectedCategoryId === category.id && !selectedSubCategoryId;
-                
-                return (
-                  <div key={category.id}>
-                    <div 
-                      className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer group transition-colors ${
-                        isSelected ? 'bg-stone-200' : 'hover:bg-stone-200'
-                      } ${
-                        dragOverTarget?.type === 'category' && dragOverTarget.id === category.id 
-                          ? 'bg-stone-200 ring-1 ring-stone-300' 
-                          : ''
-                      }`}
-                      onClick={() => {
-                        toggleCategory(category.id);
-                        onSelectCategory(category.id);
-                      }}
-                      onContextMenu={(e) => handleCategoryContextMenu(e, category.id)}
-                      onDragOver={(e) => handleDragOver(e, 'category', category.id)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, category.id)}
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div 
-                          className="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center" 
-                          style={{ backgroundColor: category.color }}
-                        >
-                          {getIconComponent(category.icon)}
-                        </div>
-                        <span className="text-stone-700 text-sm font-medium truncate">
-                          {category.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-stone-400 flex-shrink-0">
-                          {categoryNotes.length}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCreateNote(category.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-stone-300 rounded transition-opacity"
-                          title="New note"
-                        >
-                          <Plus size={14} className="text-stone-600" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenAssetModal(category.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-stone-300 rounded transition-opacity"
-                          title="Add asset"
-                        >
-                          <File size={14} className="text-stone-600" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {isCategoryExpanded && (
-                      <div className="ml-6 space-y-0.5 mt-0.5">
-                        {categoryNotes.map((note) => (
-                          <div
-                            key={note.id}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-                              currentNoteId === note.id
-                                ? 'bg-stone-300 text-stone-900'
-                                : 'hover:bg-stone-200 text-stone-600'
-                            }`}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, note.id)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectNote(note.id);
-                            }}
-                            onContextMenu={(e) => handleNoteContextMenu(e, note.id)}
-                          >
-                            <FileText size={13} className="flex-shrink-0" />
-                            <span className="text-xs truncate">{note.title}</span>
-                            {note.isPinned && (
-                              <Pin size={10} className="flex-shrink-0 text-stone-400 ml-auto" />
-                            )}
-                          </div>
-                        ))}
-
-                        {getAssetsForCategory(category.id).map((asset) => {
-                          const AssetIcon = getAssetIcon(asset.type);
-                          return (
-                            <div
-                              key={asset.id}
-                              className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors hover:bg-stone-200 text-stone-500 group"
-                              draggable
-                              onDragStart={(e) => handleAssetDragStart(e, asset.id)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onOpenAsset(asset.id);
-                              }}
-                              onContextMenu={(e) => handleAssetContextMenu(e, asset.id)}
-                            >
-                              <AssetIcon size={11} className="flex-shrink-0" />
-                              <span className="text-[11px] truncate">{asset.name}</span>
-                            </div>
-                          );
-                        })}
-
-                        {categorySubCategories.map((subCategory) => {
-                          const subCategoryNotes = getNotesForCategory(category.id, subCategory.id);
-                          const subCategoryAssets = getAssetsForCategory(category.id, subCategory.id);
-                          const isSubSelected = selectedSubCategoryId === subCategory.id;
-
-                          return (
-                            <div key={subCategory.id} className="space-y-0.5">
-                              <div
-                                className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer group transition-colors ${
-                                  isSubSelected ? 'bg-stone-200' : 'hover:bg-stone-200'
-                                } ${
-                                  dragOverTarget?.type === 'subcategory' && dragOverTarget.id === subCategory.id 
-                                    ? 'bg-stone-200 ring-1 ring-stone-300' 
-                                    : ''
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectSubCategory(subCategory.id);
-                                }}
-                                onContextMenu={(e) => handleSubCategoryContextMenu(e, subCategory.id)}
-                                onDragOver={(e) => handleDragOver(e, 'subcategory', subCategory.id)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, category.id, subCategory.id)}
-                              >
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                  {subCategory.icon && (
-                                    <div className="flex-shrink-0">
-                                      {getIconComponent(subCategory.icon, false)}
-                                    </div>
-                                  )}
-                                  <span className="text-stone-600 text-xs font-medium truncate">
-                                    {subCategory.name}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-xs text-stone-400 flex-shrink-0">
-                                    {subCategoryNotes.length}
-                                  </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onCreateNote(category.id, subCategory.id);
-                                    }}
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-stone-300 rounded transition-opacity"
-                                    title="New note"
-                                  >
-                                    <Plus size={12} className="text-stone-600" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onOpenAssetModal(category.id, subCategory.id);
-                                    }}
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-stone-300 rounded transition-opacity"
-                                    title="Add asset"
-                                  >
-                                    <File size={12} className="text-stone-600" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {subCategoryNotes.map((note) => (
-                                <div
-                                  key={note.id}
-                                  className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer ml-4 transition-colors ${
-                                    currentNoteId === note.id
-                                      ? 'bg-stone-300 text-stone-900'
-                                      : 'hover:bg-stone-200 text-stone-600'
-                                  }`}
-                                  draggable
-                                  onDragStart={(e) => handleDragStart(e, note.id)}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSelectNote(note.id);
-                                  }}
-                                  onContextMenu={(e) => handleNoteContextMenu(e, note.id)}
-                                >
-                                  <FileText size={12} className="flex-shrink-0" />
-                                  <span className="text-xs truncate">{note.title}</span>
-                                  {note.isPinned && (
-                                    <Pin size={9} className="flex-shrink-0 text-stone-400 ml-auto" />
-                                  )}
-                                </div>
-                              ))}
-
-                              {subCategoryAssets.map((asset) => {
-                                const AssetIcon = getAssetIcon(asset.type);
-                                return (
-                                  <div
-                                    key={asset.id}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer ml-4 transition-colors hover:bg-stone-200 text-stone-500"
-                                    draggable
-                                    onDragStart={(e) => handleAssetDragStart(e, asset.id)}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onOpenAsset(asset.id);
-                                    }}
-                                    onContextMenu={(e) => handleAssetContextMenu(e, asset.id)}
-                                  >
-                                    <AssetIcon size={10} className="flex-shrink-0" />
-                                    <span className="text-[11px] truncate">{asset.name}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenSubCategoryModal(category.id);
-                          }}
-                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-stone-500 hover:text-stone-700 hover:bg-stone-200 rounded w-full transition-colors"
-                        >
-                          <Plus size={12} />
-                          <span>Add sub-category</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+      {/* Main Navigation */}
+      <div className={`p-3 space-y-1 ${!sidebarOpen && 'flex flex-col items-center'}`}>
+        {(['home', 'recent', 'pins'] as ViewMode[]).map((mode) => {
+          const Icon = getViewModeIcon(mode);
+          return (
+            <div key={mode} className="group relative">
+              <button
+                onClick={() => onChangeView(mode)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${
+                  viewMode === mode
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-stone-600 hover:bg-stone-100'
+                } ${!sidebarOpen && 'w-fit p-3 justify-center'}`}
+                title={sidebarOpen ? undefined : getViewModeLabel(mode)}
+              >
+                <Icon size={18} className={`flex-shrink-0 ${
+                  mode === 'home' ? 'text-blue-500' :
+                  mode === 'recent' ? 'text-orange-500' :
+                  mode === 'pins' ? 'text-red-500' :
+                  mode === 'library' ? 'text-green-500' :
+                  mode === 'settings' ? 'text-gray-500' :
+                  mode === 'bin' ? 'text-stone-500' :
+                  mode === 'search' ? 'text-purple-500' : ''
+                }`} />
+                {sidebarOpen && <span>{getViewModeLabel(mode)}</span>}
+              </button>
+              {!sidebarOpen && (
+                <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                  {getViewModeLabel(mode)}
+                </div>
+              )}
             </div>
-          </div>
-        </>
-      )}
+          );
+        })}
 
-      {viewMode !== 'library' && (
-        <div className="flex-1" />
-      )}
+        {/* Library Button */}
+        <div className="group relative">
+          <button
+            onClick={() => onChangeView('library')}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium w-full text-stone-600 hover:bg-stone-100`}
+            title="Library"
+          >
+            <Library size={18} className="flex-shrink-0" />
+            {sidebarOpen && <span>Library</span>}
+          </button>
+        </div>
+      </div>
 
-      <div 
-        className="p-4 mt-auto border-t border-stone-200"
-        onMouseEnter={() => setIsHoveringSettings(true)}
-        onMouseLeave={() => setIsHoveringSettings(false)}
-      >
-        {isHoveringSettings && (
-          <div className="space-y-1 mb-1">
-            <button
-              onClick={() => onChangeView('search')}
-              className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors ${
-                viewMode === 'search' 
-                  ? 'bg-stone-200 text-stone-900' 
-                  : 'text-stone-600 hover:bg-stone-200'
-              }`}
-            >
-              <Search size={16} />
-              <span>Search</span>
-            </button>
-            
-            <button
-              onClick={onOpenFeedback}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors text-stone-600 hover:bg-stone-200"
-            >
-              <MessageSquare size={16} />
-              <span>Feedback</span>
-            </button>
-            
-            <button
-              onClick={() => onChangeView('bin')}
-              className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors ${
-                viewMode === 'bin' 
-                  ? 'bg-stone-200 text-stone-900' 
-                  : 'text-stone-600 hover:bg-stone-200'
-              }`}
-            >
-              <Trash2 size={16} />
-              <span>Bin</span>
-            </button>
+      {/* Bottom Section with Settings and More */}
+      <div className={`mt-auto border-t border-stone-200 p-3 space-y-1 flex flex-col ${!sidebarOpen && 'items-center'}`}>
+        {!sidebarOpen && (
+          <div className="space-y-1 w-full">
+            {(['search', 'bin'] as ViewMode[]).map((mode) => {
+              const Icon = getViewModeIcon(mode);
+              return (
+                <div key={mode} className="group relative">
+                  <button
+                    onClick={() => onChangeView(mode)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-fit text-sm font-medium ${
+                      viewMode === mode
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-stone-600 hover:bg-stone-100'
+                    } p-3 justify-center`}
+                    title={getViewModeLabel(mode)}
+                  >
+                    <Icon size={18} className="flex-shrink-0" />
+                  </button>
+                  <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                    {getViewModeLabel(mode)}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
         
-        <button
-          onClick={() => onChangeView('settings')}
-          className={`flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-medium transition-colors ${
-            viewMode === 'settings' 
-              ? 'bg-stone-200 text-stone-900' 
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          <Settings size={16} />
-          <span>Settings</span>
-        </button>
+        {sidebarOpen && (
+          <>
+            <button
+              onClick={() => onChangeView('search')}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${
+                viewMode === 'search'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              <Search size={18} className="flex-shrink-0" />
+              <span>Search</span>
+            </button>
+
+            <button
+              onClick={() => onChangeView('bin')}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${
+                viewMode === 'bin'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              <Trash2 size={18} className="flex-shrink-0" />
+              <span>Bin</span>
+            </button>
+
+            <button
+              onClick={onOpenFeedback}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium text-stone-600 hover:bg-stone-100"
+            >
+              <MessageSquare size={18} className="flex-shrink-0" />
+              <span>Feedback</span>
+            </button>
+          </>
+        )}
+
+        <div className="group relative">
+          <button
+            onClick={() => onChangeView('settings')}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${sidebarOpen ? 'w-full' : 'w-fit p-3 justify-center'} ${
+              viewMode === 'settings'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-stone-600 hover:bg-stone-100'
+            }`}
+            title={sidebarOpen ? undefined : 'Settings'}
+          >
+            <Settings size={18} className="flex-shrink-0" />
+            {sidebarOpen && <span>Settings</span>}
+          </button>
+          {!sidebarOpen && (
+            <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+              Settings
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Context Menus */}
       {noteContextMenu && (
         <NoteContextMenu
           x={noteContextMenu.x}

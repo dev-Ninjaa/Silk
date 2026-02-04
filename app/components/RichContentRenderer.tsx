@@ -112,13 +112,13 @@ const TokenRenderer: React.FC<TokenRendererProps> = ({ token, onAssetClick }) =>
     }
 
     return (
-      <span className="block my-3">
+      <span className="block my-2 md:my-3">
         <img
           src={token.url}
           alt="Embedded image"
           loading="lazy"
           onError={() => setImageError(true)}
-          className="max-w-full rounded-lg border border-stone-200"
+          className="w-full max-w-xs md:max-w-md lg:max-w-lg h-auto rounded-lg border border-stone-200"
         />
       </span>
     );
@@ -130,11 +130,11 @@ const TokenRenderer: React.FC<TokenRendererProps> = ({ token, onAssetClick }) =>
       : `https://player.vimeo.com/video/${token.videoId}`;
 
     return (
-      <span className="block my-3">
+      <span className="block my-2 md:my-3">
         {!videoLoaded && (
           <button
             onClick={() => setVideoLoaded(true)}
-            className="w-full aspect-video rounded-lg border border-stone-200 bg-stone-50 hover:bg-stone-100 transition-colors flex items-center justify-center text-stone-600 text-sm"
+            className="w-full aspect-video rounded-lg border border-stone-200 bg-stone-50 hover:bg-stone-100 transition-colors flex items-center justify-center text-xs md:text-sm text-stone-600"
           >
             Click to load {token.platform === 'youtube' ? 'YouTube' : 'Vimeo'} video
           </button>

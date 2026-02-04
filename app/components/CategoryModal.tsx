@@ -99,7 +99,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div 
         className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm"
         onClick={onClose}
@@ -107,10 +107,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       
       <div 
         ref={modalRef}
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] flex flex-col overflow-hidden"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-stone-900">{title}</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-200 flex-shrink-0">
+          <h2 className="text-base sm:text-lg font-semibold text-stone-900">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-stone-100 rounded-lg transition-colors"
@@ -119,9 +119,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2">
               Category Name
             </label>
             <input
@@ -131,15 +131,15 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               onChange={(e) => setName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="e.g., Personal, Work, Ideas"
-              className="w-full px-4 py-3 text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-stone-300 rounded-lg outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-3">
+            <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2 sm:mb-3">
               Color
             </label>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-6 gap-1.5 sm:gap-2">
               {PRESET_COLORS.map((color) => (
                 <button
                   key={color}
@@ -156,10 +156,10 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-3">
+            <label className="block text-xs sm:text-sm font-medium text-stone-700 mb-2 sm:mb-3">
               Icon (Optional)
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {PRESET_ICONS.map(({ id, Icon }) => (
                 <button
                   key={id}
@@ -170,7 +170,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                       : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                   }`}
                 >
-                  <Icon size={20} />
+                  <Icon size={16} className="sm:w-5 sm:h-5" />
                 </button>
               ))}
             </div>
@@ -178,33 +178,33 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 
           <div className="flex items-center gap-2 pt-2">
             <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              className="w-6 sm:w-8 h-6 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: selectedColor }}
             >
               {selectedIcon && (() => {
                 const iconData = PRESET_ICONS.find(i => i.id === selectedIcon);
                 if (iconData) {
                   const Icon = iconData.Icon;
-                  return <Icon size={16} className="text-white" />;
+                  return <Icon size={14} className="text-white sm:w-4 sm:h-4" />;
                 }
                 return null;
               })()}
             </div>
-            <span className="text-sm text-stone-600">Preview</span>
+            <span className="text-xs sm:text-sm text-stone-600">Preview</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 px-6 py-4 bg-stone-50 border-t border-stone-200 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-stone-50 border-t border-stone-200 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim()}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {buttonText}
           </button>
