@@ -475,7 +475,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`h-screen bg-white flex flex-col border-r border-stone-200 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+    <div className={`h-screen bg-white flex flex-col border-r border-stone-200 transition-all duration-300 ${sidebarOpen ? 'w-60 sm:w-64' : 'w-16 sm:w-20'}`}>
       {/* Header with toggle button */}
       <div className="flex items-center justify-between p-4 border-b border-stone-200">
         {sidebarOpen && <h2 className="text-lg font-bold text-stone-900">Pulm</h2>}

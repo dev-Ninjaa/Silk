@@ -63,11 +63,11 @@ export const TopBar: React.FC<TopBarProps> = ({
     }
 
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-1 text-xs md:text-sm min-w-0 flex-shrink">
         {parts.map((part, index) => (
           <React.Fragment key={index}>
             {index > 0 && <span className="text-stone-300">/</span>}
-            <span className={part.muted ? 'text-stone-400' : 'text-stone-700'}>
+            <span className={`${part.muted ? 'text-stone-400' : 'text-stone-700'} truncate`}>
               {part.text}
             </span>
           </React.Fragment>
@@ -81,51 +81,51 @@ export const TopBar: React.FC<TopBarProps> = ({
   }
 
   return (
-    <div className="h-12 border-b border-stone-200 bg-white flex items-center justify-between px-6">
+    <div className="h-12 md:h-14 border-b border-stone-200 bg-white flex items-center justify-between px-3 md:px-6 gap-2 md:gap-4 overflow-x-auto">
       {getBreadcrumb()}
       
       {viewMode === 'library' && (
-        <div className="flex items-center gap-6">
+        <div className="hidden sm:flex items-center gap-3 md:gap-6 flex-shrink-0">
           <button
             onClick={() => onTabChange?.('pages')}
-            className={`flex items-center gap-2 px-0 py-2 transition-colors text-sm font-medium border-b-2 ${
+            className={`flex items-center gap-2 px-0 py-2 transition-colors text-xs md:text-sm font-medium border-b-2 whitespace-nowrap ${
               activeTab === 'pages'
                 ? 'text-stone-900 border-stone-900'
                 : 'text-stone-500 border-transparent hover:text-stone-700'
             }`}
             title="Pages"
           >
-            <FileText size={16} />
-            <span>Pages</span>
+            <FileText size={14} className="md:w-4 md:h-4" />
+            <span className="hidden md:inline">Pages</span>
           </button>
           <button
             onClick={() => onTabChange?.('tasks')}
-            className={`flex items-center gap-2 px-0 py-2 transition-colors text-sm font-medium border-b-2 ${
+            className={`flex items-center gap-2 px-0 py-2 transition-colors text-xs md:text-sm font-medium border-b-2 whitespace-nowrap ${
               activeTab === 'tasks'
                 ? 'text-stone-900 border-stone-900'
                 : 'text-stone-500 border-transparent hover:text-stone-700'
             }`}
             title="Tasks"
           >
-            <CheckSquare2 size={16} />
+            <CheckSquare2 size={14} className="md:w-4 md:h-4" />
             <span>Tasks</span>
           </button>
           <button
             onClick={() => onTabChange?.('discussions')}
-            className={`flex items-center gap-2 px-0 py-2 transition-colors text-sm font-medium border-b-2 ${
+            className={`flex items-center gap-2 px-0 py-2 transition-colors text-xs md:text-sm font-medium border-b-2 whitespace-nowrap ${
               activeTab === 'discussions'
                 ? 'text-stone-900 border-stone-900'
                 : 'text-stone-500 border-transparent hover:text-stone-700'
             }`}
             title="Discussions"
           >
-            <MessageCircle size={16} />
-            <span>Discussions</span>
+            <MessageCircle size={14} className="md:w-4 md:h-4" />
+            <span className="hidden md:inline">Discussions</span>
           </button>
         </div>
       )}
       
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3 ml-auto flex-shrink-0">
         <div className="flex items-center gap-1 bg-stone-100 rounded-full p-1">
           <button
             onClick={onToggleReadMode}

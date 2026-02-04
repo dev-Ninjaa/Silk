@@ -599,8 +599,10 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-white text-gray-900 font-sans selection:bg-blue-100">
-      <Sidebar 
+    <div className="flex h-screen bg-white text-gray-900 font-sans selection:bg-blue-100 flex-col lg:flex-row">
+      {/* Sidebar - Hidden on mobile, visible on lg+ */}
+      <div className="hidden lg:block">
+        <Sidebar 
         viewMode={viewMode}
         categories={categories}
         subCategories={subCategories}
@@ -630,6 +632,7 @@ export default function Home() {
         onOpenAssetModal={handleOpenAssetModal}
         onOpenCategoryCreateModal={handleOpenCategoryCreateModal}
       />
+      </div>
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {viewMode === 'library' && (

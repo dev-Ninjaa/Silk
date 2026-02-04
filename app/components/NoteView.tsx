@@ -74,7 +74,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`relative ${isDragOver ? 'ring-2 ring-stone-400 ring-inset' : ''}`}
+        className={`relative w-full ${isDragOver ? 'ring-2 ring-stone-400 ring-inset' : ''}`}
       >
         <Editor
           note={note}
@@ -85,8 +85,8 @@ export const NoteView: React.FC<NoteViewProps> = ({
         />
         {isDragOver && (
           <div className="fixed inset-0 bg-stone-900/5 pointer-events-none flex items-center justify-center z-40">
-            <div className="bg-white px-6 py-3 rounded-lg shadow-lg border-2 border-stone-400 border-dashed">
-              <p className="text-stone-700 font-medium">Drop media here to insert</p>
+            <div className="bg-white px-4 sm:px-6 py-3 rounded-lg shadow-lg border-2 border-stone-400 border-dashed">
+              <p className="text-stone-700 font-medium text-sm sm:text-base">Drop media here to insert</p>
             </div>
           </div>
         )}
@@ -97,9 +97,9 @@ export const NoteView: React.FC<NoteViewProps> = ({
   // Read mode - render with rich content support
   return (
     <>
-      <div className="max-w-3xl mx-auto px-12 py-16 pb-48">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-800">
+      <div className="max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 md:py-12 lg:py-16 pb-32 md:pb-48">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 break-words">
             {note.title}
           </h1>
         </div>

@@ -31,8 +31,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
   return (
     <div className="h-full overflow-y-auto bg-white">
-      <div className="max-w-4xl mx-auto px-8 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Search</h1>
+      <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Search</h1>
         
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
@@ -54,11 +54,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
               <div
                 key={note.id}
                 onClick={() => onSelectNote(note.id)}
-                className="p-4 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50 cursor-pointer transition-all"
+                className="p-3 sm:p-4 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50 cursor-pointer transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-medium text-gray-900 truncate">
+                    <h3 className="text-sm sm:text-base font-medium text-gray-900 truncate">
                       {note.title}
                     </h3>
                     {category && (

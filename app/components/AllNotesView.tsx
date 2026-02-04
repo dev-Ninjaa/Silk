@@ -43,10 +43,10 @@ export const AllNotesView: React.FC<AllNotesViewProps> = ({
 
   return (
     <div className="h-full overflow-y-auto bg-white">
-      <div className="max-w-7xl mx-auto px-8 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">All Notes</h1>
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 md:mb-8">All Notes</h1>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
           {activeNotes.map((note) => {
             const category = getCategoryForNote(note);
             
@@ -64,7 +64,7 @@ export const AllNotesView: React.FC<AllNotesViewProps> = ({
         
         {activeNotes.length === 0 && (
           <div className="text-center py-12 text-stone-500">
-            <p>No notes yet. Create your first note from the Library.</p>
+            <p className="text-sm md:text-base">No notes yet. Create your first note from the Library.</p>
           </div>
         )}
       </div>
