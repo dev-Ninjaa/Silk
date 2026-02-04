@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Note, Category, Asset } from '@/app/types';
 import { BinContextMenu } from './BinContextMenu';
 import { NoteCard } from './NoteCard';
-import { File, Link as LinkIcon, Image, FileCode } from 'lucide-react';
+import { File, Link as LinkIcon, Image, FileCode, FileVideo, FileAudio, FileArchive, FileText } from 'lucide-react';
 
 interface BinViewProps {
   notes: Note[];
@@ -47,13 +47,21 @@ export const BinView: React.FC<BinViewProps> = ({
     switch (type) {
       case 'pdf':
       case 'docx':
-        return File;
+        return FileText;
       case 'link':
         return LinkIcon;
       case 'image':
         return Image;
+      case 'video':
+        return FileVideo;
+      case 'audio':
+        return FileAudio;
+      case 'archive':
+      case 'zip':
+        return FileArchive;
       case 'markdown':
       case 'text':
+      case 'code':
         return FileCode;
       default:
         return File;
