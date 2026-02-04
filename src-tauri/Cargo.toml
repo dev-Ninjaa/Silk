@@ -1,0 +1,19 @@
+[package]
+name = "pulm-notes"
+version = "0.0.1"
+description = "A personal note taking app"
+authors = ["Pulm Notes"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.1", features = ["devtools"] }
+tauri-plugin-shell = "2.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

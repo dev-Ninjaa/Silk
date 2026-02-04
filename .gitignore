@@ -30,3 +30,8 @@ node_modules
 *.njsproj
 *.sln
 *.sw?
+
+# Tauri
+/src-tauri/target/
+/src-tauri/WixTools/
+/src-tauri/Cargo.lock
