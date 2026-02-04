@@ -14,6 +14,7 @@ import { CommandPalette } from "@/app/components/CommandPalette";
 import { AssetModal } from "@/app/components/AssetModal";
 import { AssetViewer } from "@/app/components/AssetViewer";
 import { NoteView } from "@/app/components/NoteView";
+import { NoteTabs } from "@/app/components/NoteTabs";
 import { CategoryModal } from "@/app/components/CategoryModal";
 import { SubCategoryModal } from "@/app/components/SubCategoryModal";
 import { defaultCategories } from "@/app/data/defaultCategories";
@@ -43,6 +44,7 @@ export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [reflections, setReflections] = useState<DailyReflection[]>([]);
   const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
+  const [openNoteIds, setOpenNoteIds] = useState<string[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('home');
@@ -295,6 +297,50 @@ export default function Home() {
         : n
     ));
     setViewMode('library');
+    
+    // Add to open tabs if not already there
+    if (!openNoteIds.includes(noteId)) {
+      setOpenNoteIds([...openNoteIds, noteId]);
+    }
+  };
+
+  const handleOpenNote = (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    
+    if (!note || note.isDeleted) {
+      return;
+    }
+    
+    setCurrentNoteId(noteId);
+    setIsReadMode(false);
+    setSelectedCategoryId(note.categoryId);
+    setSelectedSubCategoryId(note.subCategoryId || null);
+    setNotes(notes.map(n => 
+      n.id === noteId 
+        ? { ...n, lastOpenedAt: new Date() }
+        : n
+    ));
+    setViewMode('library');
+    
+    // Add to open tabs if not already there
+    if (!openNoteIds.includes(noteId)) {
+      setOpenNoteIds([...openNoteIds, noteId]);
+    }
+  };
+
+  const handleCloseTab = (noteId: string) => {
+    const newOpenNoteIds = openNoteIds.filter(id => id !== noteId);
+    setOpenNoteIds(newOpenNoteIds);
+    
+    // If closing the current note, switch to another open note or null
+    if (currentNoteId === noteId) {
+      if (newOpenNoteIds.length > 0) {
+        setCurrentNoteId(newOpenNoteIds[newOpenNoteIds.length - 1]);
+      } else {
+        setCurrentNoteId(null);
+        setViewMode('home');
+      }
+    }
   };
 
   const handleSelectCategory = (categoryId: string) => {
@@ -683,30 +729,40 @@ export default function Home() {
             />
           )}
           
-          <div className="flex-1 overflow-y-auto cursor-text">
+          <div className="flex-1 overflow-y-auto cursor-text flex flex-col">
             {viewMode === 'library' && currentNote && (
-              <NoteView 
-                isReadMode={isReadMode} 
-                note={currentNote}
-                allNotes={[
-                  ...notes.map(n => ({ id: n.id, title: n.title, isDeleted: n.isDeleted })),
-                  ...assets.filter(a => !a.isDeleted).map(a => ({ 
-                    id: a.id, 
-                    title: `📎 ${a.name}`,
-                    isDeleted: false 
-                  }))
-                ]}
-                assets={assets.filter(a => !a.isDeleted)}
-                onUpdateTitle={handleUpdateTitle}
-                onUpdateBlocks={handleUpdateBlocks}
-                onOpenNote={(id) => {
-                  if (id.startsWith('asset-')) {
-                    handleOpenAsset(id);
-                  } else {
-                    handleSelectNote(id);
-                  }
-                }}
-              />
+              <>
+                <NoteTabs 
+                  openNotes={openNoteIds.map(id => notes.find(n => n.id === id)).filter(Boolean) as Note[]}
+                  currentNoteId={currentNoteId}
+                  onSelectNote={handleOpenNote}
+                  onCloseTab={handleCloseTab}
+                />
+                <div className="flex-1 overflow-y-auto">
+                  <NoteView 
+                    isReadMode={isReadMode} 
+                    note={currentNote}
+                    allNotes={[
+                      ...notes.map(n => ({ id: n.id, title: n.title, isDeleted: n.isDeleted })),
+                      ...assets.filter(a => !a.isDeleted).map(a => ({ 
+                        id: a.id, 
+                        title: `📎 ${a.name}`,
+                        isDeleted: false 
+                      }))
+                    ]}
+                    assets={assets.filter(a => !a.isDeleted)}
+                    onUpdateTitle={handleUpdateTitle}
+                    onUpdateBlocks={handleUpdateBlocks}
+                    onOpenNote={(id) => {
+                      if (id.startsWith('asset-')) {
+                        handleOpenAsset(id);
+                      } else {
+                        handleOpenNote(id);
+                      }
+                    }}
+                  />
+                </div>
+              </>
             )}
             
             {viewMode === 'home' && (
