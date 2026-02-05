@@ -149,6 +149,7 @@ export const Block: React.FC<BlockProps> = ({
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, { acceptNode });
       let currentOffset = 0;
       let node: Node | null;
+      // Track the last valid text node seen for fallback positioning
       let lastNode: Node | null = null;
       
       while ((node = walker.nextNode())) {
@@ -156,8 +157,9 @@ export const Block: React.FC<BlockProps> = ({
         lastNode = node;
         
         // Handle boundary case: if exactly at node boundary, prefer start of next node
+        // This ensures cursor placement between nodes is consistent and predictable
         if (currentOffset + nodeLength === targetOffset) {
-          // Check if there's a next node without advancing walker
+          // Peek at next node without permanently advancing walker
           const savedNode = walker.currentNode;
           const nextNode = walker.nextNode();
           if (nextNode) {
@@ -167,7 +169,7 @@ export const Block: React.FC<BlockProps> = ({
             sel.addRange(range);
             return;
           }
-          // Reset walker if no next node found
+          // Reset walker if no next node found, continue with current node
           walker.currentNode = savedNode;
         }
         

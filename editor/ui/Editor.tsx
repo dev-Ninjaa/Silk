@@ -362,8 +362,10 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
         e.preventDefault();
         const prevBlock = note.blocks[currentIndex - 1];
         
-        // Merge content
-        const mergedContent = prevBlock.content + currentBlock.content;
+        // Merge content (ensure both values are strings)
+        const prevContent = prevBlock.content || '';
+        const currentContent = currentBlock.content || '';
+        const mergedContent = prevContent + currentContent;
         const newBlocks = note.blocks
           .map(b => b.id === prevBlock.id ? { ...b, content: mergedContent } : b)
           .filter(b => b.id !== id);
