@@ -439,10 +439,6 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
         fallbackOffset = text.length;
       }
 
-      // Use binary search approach for better performance with large text
-      let left = 0;
-      let right = text.length;
-      
       // First, check if any position in this node is on the target line
       range.setStart(node, 0);
       range.setEnd(node, 0);

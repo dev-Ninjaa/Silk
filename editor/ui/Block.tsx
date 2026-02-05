@@ -163,10 +163,11 @@ export const Block: React.FC<BlockProps> = ({
       for (let i = 0; i < textNodes.length; i++) {
         const currentNode = textNodes[i];
         const nodeLength = currentNode.textContent?.length || 0;
+        const hasNextNode = i < textNodes.length - 1;
         
         // Handle boundary case: if exactly at node boundary, prefer start of next node
         // This ensures cursor placement between nodes is consistent and predictable
-        if (currentOffset + nodeLength === targetOffset && i < textNodes.length - 1) {
+        if (currentOffset + nodeLength === targetOffset && hasNextNode) {
           const nextNode = textNodes[i + 1];
           range.setStart(nextNode, 0);
           range.setEnd(nextNode, 0);
