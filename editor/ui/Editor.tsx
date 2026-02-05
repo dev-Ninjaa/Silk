@@ -188,7 +188,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
     // Helper to get cursor offset from start of element
     const getCursorOffset = (): number => {
       const selection = window.getSelection();
-      if (!selection || !isSelectionInBlock(selection)) return 0;
+      if (!selection || !isSelectionInBlock(selection) || !blockEl) return 0;
       const range = selection.getRangeAt(0);
       const preCaretRange = range.cloneRange();
       preCaretRange.selectNodeContents(blockEl);
