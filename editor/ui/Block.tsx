@@ -92,7 +92,8 @@ export const Block: React.FC<BlockProps> = ({
       if (cursorPosition !== null && cursorPosition !== undefined && !hasPositionedCursorRef.current) {
         // Small delay to ensure focus is complete and check if still focused
         requestAnimationFrame(() => {
-          if (contentRef.current && document.activeElement === contentRef.current) {
+          // Check if contentRef or any of its children still has focus
+          if (contentRef.current && contentRef.current.contains(document.activeElement)) {
             setCursorPosition(cursorPosition);
             hasPositionedCursorRef.current = true;
             lastCursorPositionRef.current = cursorPosition;
