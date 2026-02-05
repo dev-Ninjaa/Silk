@@ -92,8 +92,8 @@ export const Block: React.FC<BlockProps> = ({
       if (cursorPosition !== null && cursorPosition !== undefined && !hasPositionedCursorRef.current) {
         // Small delay to ensure focus is complete and check if still focused
         requestAnimationFrame(() => {
-          // Check if contentRef or any of its children still has focus
-          if (contentRef.current && contentRef.current.contains(document.activeElement)) {
+          // Check if contentRef or any of its children still has focus and we're still the focused block
+          if (isFocused && contentRef.current && contentRef.current.contains(document.activeElement)) {
             setCursorPosition(cursorPosition);
             hasPositionedCursorRef.current = true;
             lastCursorPositionRef.current = cursorPosition;
@@ -149,35 +149,35 @@ export const Block: React.FC<BlockProps> = ({
 
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, { acceptNode });
       let currentOffset = 0;
+      // Collect all text nodes first to avoid walker state issues
+      const textNodes: Node[] = [];
       let node: Node | null;
-      // Track the last valid text node seen for fallback positioning
-      let lastNode: Node | null = null;
-      
       while ((node = walker.nextNode())) {
-        const nodeLength = node.textContent?.length || 0;
-        lastNode = node;
+        textNodes.push(node);
+      }
+      
+      // Track the last valid text node seen for fallback positioning
+      let lastNode: Node | null = textNodes[textNodes.length - 1] || null;
+      
+      for (let i = 0; i < textNodes.length; i++) {
+        const currentNode = textNodes[i];
+        const nodeLength = currentNode.textContent?.length || 0;
         
         // Handle boundary case: if exactly at node boundary, prefer start of next node
         // This ensures cursor placement between nodes is consistent and predictable
-        if (currentOffset + nodeLength === targetOffset) {
-          // Peek at next node without permanently advancing walker
-          const savedNode = walker.currentNode;
-          const nextNode = walker.nextNode();
-          if (nextNode) {
-            range.setStart(nextNode, 0);
-            range.setEnd(nextNode, 0);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            return;
-          }
-          // Reset walker if no next node found, continue with current node
-          walker.currentNode = savedNode;
+        if (currentOffset + nodeLength === targetOffset && i < textNodes.length - 1) {
+          const nextNode = textNodes[i + 1];
+          range.setStart(nextNode, 0);
+          range.setEnd(nextNode, 0);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
         }
         
         if (currentOffset + nodeLength >= targetOffset) {
           const offsetInNode = targetOffset - currentOffset;
-          range.setStart(node, offsetInNode);
-          range.setEnd(node, offsetInNode);
+          range.setStart(currentNode, offsetInNode);
+          range.setEnd(currentNode, offsetInNode);
           sel.removeAllRanges();
           sel.addRange(range);
           return;

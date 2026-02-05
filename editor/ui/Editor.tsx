@@ -40,7 +40,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
     let lineHeight = parseFloat(computedStyle.lineHeight);
     if (isNaN(lineHeight)) {
       const fontSize = parseFloat(computedStyle.fontSize);
-      lineHeight = !isNaN(fontSize) ? fontSize * DEFAULT_LINE_HEIGHT_RATIO : DEFAULT_FONT_SIZE;
+      lineHeight = (!isNaN(fontSize) ? fontSize : DEFAULT_FONT_SIZE) * DEFAULT_LINE_HEIGHT_RATIO;
     }
     return lineHeight;
   };
