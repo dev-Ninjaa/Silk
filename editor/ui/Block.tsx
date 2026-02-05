@@ -2,28 +2,47 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { Block as BlockType } from '../schema/types';
 import { ChevronRight, GripVertical } from 'lucide-react';
 
+type CursorPosition = 'start' | 'end' | number;
+
 interface BlockProps {
   block: BlockType;
   isFocused: boolean;
+  cursorPosition?: CursorPosition | null;
   updateBlock: (id: string, content: string) => void;
   onKeyDown: (e: React.KeyboardEvent, id: string) => void;
-  onFocus: (id: string) => void;
-  onClick: (id: string) => void;
+  onFocus: (id: string, position?: CursorPosition) => void;
+  onClick: (id: string, position?: CursorPosition) => void;
   onMentionClick?: (noteId: string) => void;
+  setBlockRef?: (id: string, el: HTMLDivElement | null) => void;
 }
 
 export const Block: React.FC<BlockProps> = ({
   block,
   isFocused,
+  cursorPosition,
   updateBlock,
   onKeyDown,
   onFocus,
   onClick,
-  onMentionClick
+  onMentionClick,
+  setBlockRef
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const isTypingRef = useRef(false);
   const prevMentionsLengthRef = useRef(block.mentions?.length || 0);
+  const lastCursorPositionRef = useRef<CursorPosition | null>(null);
+
+  // Register ref with parent
+  useEffect(() => {
+    if (setBlockRef && contentRef.current) {
+      setBlockRef(block.id, contentRef.current);
+    }
+    return () => {
+      if (setBlockRef) {
+        setBlockRef(block.id, null);
+      }
+    };
+  }, [block.id, setBlockRef]);
 
   // Set initial content on mount
   useEffect(() => {
@@ -32,11 +51,99 @@ export const Block: React.FC<BlockProps> = ({
     }
   }, []); // Only run on mount
 
+  // Track if we've already focused to avoid re-positioning cursor
+  const hasPositionedCursorRef = useRef(false);
+  const prevFocusedRef = useRef(isFocused);
+
+  // Reset cursor positioning flag when losing focus
   useEffect(() => {
-    if (isFocused && contentRef.current) {
-      contentRef.current.focus();
+    if (!isFocused) {
+      hasPositionedCursorRef.current = false;
     }
   }, [isFocused]);
+
+  // Handle focus and cursor positioning
+  useEffect(() => {
+    if (isFocused && contentRef.current) {
+      // Only focus and position cursor when focus changes from false to true
+      // OR when cursorPosition explicitly changes to a non-null value
+      const justGotFocus = !prevFocusedRef.current && isFocused;
+      
+      if (justGotFocus) {
+        contentRef.current.focus();
+        hasPositionedCursorRef.current = false;
+      }
+      
+      // Only set cursor position if:
+      // 1. cursorPosition is explicitly set (not null)
+      // 2. AND we haven't already positioned for this focus session
+      if (cursorPosition !== null && cursorPosition !== undefined && !hasPositionedCursorRef.current) {
+        // Small delay to ensure focus is complete
+        requestAnimationFrame(() => {
+          setCursorPosition(cursorPosition);
+          hasPositionedCursorRef.current = true;
+          lastCursorPositionRef.current = cursorPosition;
+        });
+      }
+    }
+    
+    prevFocusedRef.current = isFocused;
+  }, [isFocused, cursorPosition]);
+
+  const setCursorPosition = (position: CursorPosition) => {
+    if (!contentRef.current) return;
+
+    const element = contentRef.current;
+    const sel = window.getSelection();
+    if (!sel) return;
+
+    const range = document.createRange();
+    const totalLength = element.textContent?.length || 0;
+
+    if (position === 'start' || totalLength === 0) {
+      range.selectNodeContents(element);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    
+    if (position === 'end') {
+      range.selectNodeContents(element);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    
+    if (typeof position === 'number') {
+      const targetOffset = Math.min(Math.max(0, position), totalLength);
+      
+      // Use TreeWalker to find the position in text nodes
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+      let currentOffset = 0;
+      let node: Node | null;
+      
+      while ((node = walker.nextNode())) {
+        const nodeLength = node.textContent?.length || 0;
+        if (currentOffset + nodeLength >= targetOffset) {
+          const offsetInNode = targetOffset - currentOffset;
+          range.setStart(node, offsetInNode);
+          range.setEnd(node, offsetInNode);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        currentOffset += nodeLength;
+      }
+      
+      // Fallback to end if position not found
+      range.selectNodeContents(element);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  };
 
   // Render mentions when they change OR when unfocused
   useEffect(() => {
@@ -53,12 +160,7 @@ export const Block: React.FC<BlockProps> = ({
     } else if (currentMentionsLength > prevMentionsLength) {
       // A new mention was added - render it and place cursor at end
       renderContentWithMentions();
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(contentRef.current);
-      range.collapse(false);
-      sel?.removeAllRanges();
-      sel?.addRange(range);
+      setCursorPosition('end');
     }
 
     prevMentionsLengthRef.current = currentMentionsLength;
@@ -67,7 +169,17 @@ export const Block: React.FC<BlockProps> = ({
   const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
     isTypingRef.current = true;
     const text = e.currentTarget.innerText;
+    
+    // Save current cursor position before updating
+    const selection = window.getSelection();
+    let savedOffset = 0;
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      savedOffset = range.startOffset;
+    }
+    
     updateBlock(block.id, text);
+    
     // Reset typing flag after state update
     requestAnimationFrame(() => {
       isTypingRef.current = false;
