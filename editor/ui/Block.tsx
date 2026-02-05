@@ -158,7 +158,7 @@ export const Block: React.FC<BlockProps> = ({
       }
       
       // Track the last valid text node seen for fallback positioning
-      const lastNode: Node | null = textNodes.at(-1) ?? null;
+      const lastNode = textNodes[textNodes.length - 1] || null;
       
       for (let i = 0; i < textNodes.length; i++) {
         const currentNode = textNodes[i];
