@@ -183,16 +183,18 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
         return rects[0];
       }
       
-      // Fallback: insert a temporary span to get position
+      // Fallback: insert a temporary span to get position, using a cloned range
+      const tempRange = range.cloneRange();
       const span = document.createElement('span');
       span.textContent = '\u200B'; // Zero-width space
-      range.insertNode(span);
+      tempRange.insertNode(span);
       const rect = span.getBoundingClientRect();
       span.parentNode?.removeChild(span);
       
-      // Normalize the range after removing span
-      selection.removeAllRanges();
-      selection.addRange(range);
+      // Do not modify the actual selection; we only needed the geometry
+      if (typeof tempRange.detach === 'function') {
+        tempRange.detach();
+      }
       
       return rect;
     };
