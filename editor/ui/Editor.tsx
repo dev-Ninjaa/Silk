@@ -60,7 +60,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
     const validIds = new Set(note.blocks.map((block) => block.id));
     const refs = blockRefs.current;
 
-    for (const id of Array.from(refs.keys())) {
+    for (const id of refs.keys()) {
       if (!validIds.has(id)) {
         refs.delete(id);
       }
