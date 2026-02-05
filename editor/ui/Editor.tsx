@@ -47,11 +47,9 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
 
   const focusBlock = useCallback((blockId: string, position?: CursorPosition) => {
     setFocusedBlockId(blockId);
-    // Update cursor position: use provided position, or clear it when none is specified
+    // Update cursor position when explicitly provided (including null to clear)
     if (position !== undefined) {
       setCursorPosition(position);
-    } else {
-      setCursorPosition(null);
     }
   }, []);
 
@@ -193,7 +191,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
       if (!selection || !isSelectionInBlock(selection)) return 0;
       const range = selection.getRangeAt(0);
       const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(blockEl!);
+      preCaretRange.selectNodeContents(blockEl);
       preCaretRange.setEnd(range.startContainer, range.startOffset);
       return preCaretRange.toString().length;
     };
