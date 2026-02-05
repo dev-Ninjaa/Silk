@@ -1,9 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { Block as BlockType } from '../schema/types';
+import { Block as BlockType, CursorPosition } from '../schema/types';
 import { ChevronRight, GripVertical } from 'lucide-react';
-
-type CursorPosition = 'start' | 'end' | number;
-
 interface BlockProps {
   block: BlockType;
   isFocused: boolean;
