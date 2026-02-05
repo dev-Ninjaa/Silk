@@ -28,18 +28,25 @@ export const Block: React.FC<BlockProps> = ({
   const isTypingRef = useRef(false);
   const prevMentionsLengthRef = useRef(block.mentions?.length || 0);
   const lastCursorPositionRef = useRef<CursorPosition | null>(null);
+  const blockIdRef = useRef(block.id);
 
   // Register ref with parent
   useEffect(() => {
+    blockIdRef.current = block.id;
+
     if (setBlockRef && contentRef.current) {
       setBlockRef(block.id, contentRef.current);
     }
+  }, [block.id, setBlockRef]);
+
+  // Cleanup ref on unmount
+  useEffect(() => {
     return () => {
       if (setBlockRef) {
-        setBlockRef(block.id, null);
+        setBlockRef(blockIdRef.current, null);
       }
     };
-  }, [block.id, setBlockRef]);
+  }, [setBlockRef]);
 
   // Set initial content on mount
   useEffect(() => {
@@ -59,6 +66,13 @@ export const Block: React.FC<BlockProps> = ({
     }
   }, [isFocused]);
 
+  // Reset cursor positioning state when cursorPosition is cleared
+  useEffect(() => {
+    if (cursorPosition === null || cursorPosition === undefined) {
+      hasPositionedCursorRef.current = false;
+    }
+  }, [cursorPosition]);
+
   // Handle focus and cursor positioning
   useEffect(() => {
     if (isFocused && contentRef.current) {
@@ -75,11 +89,13 @@ export const Block: React.FC<BlockProps> = ({
       // 1. cursorPosition is explicitly set (not null)
       // 2. AND we haven't already positioned for this focus session
       if (cursorPosition !== null && cursorPosition !== undefined && !hasPositionedCursorRef.current) {
-        // Small delay to ensure focus is complete
+        // Small delay to ensure focus is complete and check if still focused
         requestAnimationFrame(() => {
-          setCursorPosition(cursorPosition);
-          hasPositionedCursorRef.current = true;
-          lastCursorPositionRef.current = cursorPosition;
+          if (contentRef.current && document.activeElement === contentRef.current) {
+            setCursorPosition(cursorPosition);
+            hasPositionedCursorRef.current = true;
+            lastCursorPositionRef.current = cursorPosition;
+          }
         });
       }
     }
@@ -117,12 +133,40 @@ export const Block: React.FC<BlockProps> = ({
       const targetOffset = Math.min(Math.max(0, position), totalLength);
       
       // Use TreeWalker to find the position in text nodes
-      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+      // Skip text nodes inside contentEditable='false' elements (like mention spans)
+      const acceptNode = (node: Node): number => {
+        let parent = node.parentElement;
+        while (parent && parent !== element) {
+          if (parent.contentEditable === 'false') {
+            return NodeFilter.FILTER_REJECT;
+          }
+          parent = parent.parentElement;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      };
+
+      const whatToShow = typeof window !== 'undefined' && (window as any).NodeFilter
+        ? (window as any).NodeFilter.SHOW_TEXT
+        : 4; // 4 is the standard value for NodeFilter.SHOW_TEXT
+      const walker = document.createTreeWalker(element, whatToShow, { acceptNode });
       let currentOffset = 0;
       let node: Node | null;
+      let lastNode: Node | null = null;
       
       while ((node = walker.nextNode())) {
         const nodeLength = node.textContent?.length || 0;
+        lastNode = node;
+        
+        // Handle boundary case: if exactly at node boundary, prefer start of next node
+        if (currentOffset + nodeLength === targetOffset && walker.nextNode()) {
+          const nextNode = walker.currentNode;
+          range.setStart(nextNode, 0);
+          range.setEnd(nextNode, 0);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          return;
+        }
+        
         if (currentOffset + nodeLength >= targetOffset) {
           const offsetInNode = targetOffset - currentOffset;
           range.setStart(node, offsetInNode);
@@ -134,11 +178,19 @@ export const Block: React.FC<BlockProps> = ({
         currentOffset += nodeLength;
       }
       
-      // Fallback to end if position not found
-      range.selectNodeContents(element);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
+      // Fallback: place at end of last valid text node or end of element
+      if (lastNode) {
+        const nodeLength = lastNode.textContent?.length || 0;
+        range.setStart(lastNode, nodeLength);
+        range.setEnd(lastNode, nodeLength);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        range.selectNodeContents(element);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     }
   };
 
@@ -157,7 +209,9 @@ export const Block: React.FC<BlockProps> = ({
     } else if (currentMentionsLength > prevMentionsLength) {
       // A new mention was added - render it and place cursor at end
       renderContentWithMentions();
-      setCursorPosition('end');
+      requestAnimationFrame(() => {
+        setCursorPosition('end');
+      });
     }
 
     prevMentionsLengthRef.current = currentMentionsLength;
@@ -166,14 +220,6 @@ export const Block: React.FC<BlockProps> = ({
   const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
     isTypingRef.current = true;
     const text = e.currentTarget.innerText;
-    
-    // Save current cursor position before updating
-    const selection = window.getSelection();
-    let savedOffset = 0;
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      savedOffset = range.startOffset;
-    }
     
     updateBlock(block.id, text);
     

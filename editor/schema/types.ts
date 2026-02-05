@@ -43,6 +43,8 @@ export interface Coordinates {
   y: number;
 }
 
+export type CursorPosition = 'start' | 'end' | number;
+
 export interface Note {
   id: string;
   title: string;
