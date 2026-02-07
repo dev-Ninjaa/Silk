@@ -40,8 +40,18 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Auto-focus menu when it appears to intercept keyboard events
+  useEffect(() => {
+    if (menuRef.current) {
+      menuRef.current.focus();
+    }
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent any keyboard events from bubbling when menu is open
+      e.stopPropagation();
+      
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
@@ -59,6 +69,8 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
           e.preventDefault();
           onClose();
           break;
+        default:
+          e.preventDefault();
       }
     };
 
@@ -83,17 +95,22 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
   return (
     <div
       ref={menuRef}
-      className="slash-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[380px]"
+      tabIndex={-1}
+      className="slash-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[380px]"
       style={{
         top: position.y,
         left: position.x
       }}
+      onKeyDown={(e) => {
+        // Prevent keyboard events from bubbling to parent
+        e.stopPropagation();
+      }}
     >
-      <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider bg-white sticky top-0 z-10">
-        Insert
+      <div className="px-2 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider bg-white sticky top-0 z-10">
+        Commands
       </div>
 
-      <div className="flex flex-col pb-2">
+      <div className="flex flex-col py-1">
         {MENU_ITEMS.map((item, index) => {
           const isSelected = index === selectedIndex;
           return (
@@ -101,24 +118,22 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
               key={item.id}
               onClick={() => onSelect(item.id)}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`flex items-center justify-between px-3 py-1.5 mx-1 rounded text-sm transition-colors duration-150 ${isSelected
+              className={`flex items-center gap-2 px-2 py-1 mx-0.5 rounded text-xs transition-colors duration-150 ${isSelected
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
                 }`}
             >
-              <div className="flex items-center gap-3">
-                <div className={`p-1 rounded border ${isSelected ? 'bg-transparent border-white/20' : 'bg-white border-gray-200'
-                  }`}>
-                  <item.icon size={16} className={isSelected ? 'text-white' : 'text-gray-600'} />
-                </div>
-
-                <span className="font-medium">{item.label}</span>
+              <div className={`p-0.5 rounded ${isSelected ? 'bg-white/20' : 'bg-transparent'
+                }`}>
+                <item.icon size={14} className={isSelected ? 'text-white' : 'text-gray-600'} />
               </div>
 
+              <span className="font-medium truncate">{item.label}</span>
+
               {item.shortcut && (
-                <div className={`text-[10px] px-1 rounded border ${isSelected
-                    ? 'text-blue-100 border-white/30'
-                    : 'text-gray-400 border-gray-200'
+                <div className={`text-[9px] px-1 rounded ml-auto whitespace-nowrap ${isSelected
+                    ? 'text-blue-100'
+                    : 'text-gray-400'
                   }`}>
                   {item.shortcut}
                 </div>
