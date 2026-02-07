@@ -377,72 +377,72 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Keyboard navigation state
-  const [keyboardNavIndex, setKeyboardNavIndex] = useState(0);
-  const [keyboardNavItems, setKeyboardNavItems] = useState<Array<{ type: 'category' | 'subcategory' | 'note', id: string }>>([]);
+  // Keyboard navigation state - disabled
+  // const [keyboardNavIndex, setKeyboardNavIndex] = useState(0);
+  // const [keyboardNavItems, setKeyboardNavItems] = useState<Array<{ type: 'category' | 'subcategory' | 'note', id: string }>>([]);
 
-  // Build keyboard navigation items when in library mode
-  useEffect(() => {
-    if (viewMode === 'library') {
-      const items: Array<{ type: 'category' | 'subcategory' | 'note', id: string }> = [];
+  // Build keyboard navigation items when in library mode - disabled
+  // useEffect(() => {
+  //   if (viewMode === 'library') {
+  //     const items: Array<{ type: 'category' | 'subcategory' | 'note', id: string }> = [];
 
-      categories.forEach(category => {
-        items.push({ type: 'category', id: category.id });
+  //     categories.forEach(category => {
+  //       items.push({ type: 'category', id: category.id });
 
-        // Add category-level notes
-        const categoryNotes = getNotesForCategory(category.id);
-        categoryNotes.forEach(note => {
-          items.push({ type: 'note', id: note.id });
-        });
+  //       // Add category-level notes
+  //       const categoryNotes = getNotesForCategory(category.id);
+  //       categoryNotes.forEach(note => {
+  //         items.push({ type: 'note', id: note.id });
+  //       });
 
-        // Add subcategories and their notes
-        const categorySubCategories = getSubCategoriesForCategory(category.id);
-        categorySubCategories.forEach(subCategory => {
-          items.push({ type: 'subcategory', id: subCategory.id });
+  //       // Add subcategories and their notes
+  //       const categorySubCategories = getSubCategoriesForCategory(category.id);
+  //       categorySubCategories.forEach(subCategory => {
+  //         items.push({ type: 'subcategory', id: subCategory.id });
 
-          const subCategoryNotes = getNotesForCategory(category.id, subCategory.id);
-          subCategoryNotes.forEach(note => {
-            items.push({ type: 'note', id: note.id });
-          });
-        });
-      });
+  //         const subCategoryNotes = getNotesForCategory(category.id, subCategory.id);
+  //         subCategoryNotes.forEach(note => {
+  //           items.push({ type: 'note', id: note.id });
+  //         });
+  //       });
+  //     });
 
-      setKeyboardNavItems(items);
-      setKeyboardNavIndex(0);
-    }
-  }, [viewMode, categories, subCategories, notes]);
+  //     setKeyboardNavItems(items);
+  //     setKeyboardNavIndex(0);
+  //   }
+  // }, [viewMode, categories, subCategories, notes]);
 
-  // Keyboard navigation handler
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (viewMode !== 'library' || keyboardNavItems.length === 0) return;
+  // Keyboard navigation handler - disabled
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (viewMode !== 'library' || keyboardNavItems.length === 0) return;
 
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setKeyboardNavIndex(prev =>
-          prev < keyboardNavItems.length - 1 ? prev + 1 : prev
-        );
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setKeyboardNavIndex(prev => prev > 0 ? prev - 1 : 0);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const currentItem = keyboardNavItems[keyboardNavIndex];
-        if (currentItem) {
-          if (currentItem.type === 'category') {
-            onSelectCategory(currentItem.id);
-          } else if (currentItem.type === 'subcategory') {
-            onSelectSubCategory(currentItem.id);
-          } else if (currentItem.type === 'note') {
-            onSelectNote(currentItem.id);
-          }
-        }
-      }
-    };
+  //     if (e.key === 'ArrowDown') {
+  //       e.preventDefault();
+  //       setKeyboardNavIndex(prev =>
+  //         prev < keyboardNavItems.length - 1 ? prev + 1 : prev
+  //       );
+  //     } else if (e.key === 'ArrowUp') {
+  //       e.preventDefault();
+  //       setKeyboardNavIndex(prev => prev > 0 ? prev - 1 : 0);
+  //     } else if (e.key === 'Enter') {
+  //       e.preventDefault();
+  //       const currentItem = keyboardNavItems[keyboardNavIndex];
+  //       if (currentItem) {
+  //         if (currentItem.type === 'category') {
+  //           onSelectCategory(currentItem.id);
+  //         } else if (currentItem.type === 'subcategory') {
+  //           onSelectSubCategory(currentItem.id);
+  //         } else if (currentItem.type === 'note') {
+  //           onSelectNote(currentItem.id);
+  //         }
+  //       }
+  //     }
+  //   };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [viewMode, keyboardNavItems, keyboardNavIndex]);
+  //   document.addEventListener('keydown', handleKeyDown);
+  //   return () => document.removeEventListener('keydown', handleKeyDown);
+  // }, [viewMode, keyboardNavItems, keyboardNavIndex]);
 
   const getIconComponent = (iconId?: string, withBackground: boolean = true) => {
     if (!iconId) return null;
