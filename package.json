@@ -13,17 +13,43 @@
     "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.17",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@tiptap/core": "^3.19.0",
+    "@tiptap/extension-code-block": "^2.0.0",
+    "@tiptap/extension-highlight": "^3.19.0",
+    "@tiptap/extension-horizontal-rule": "^3.19.0",
+    "@tiptap/extension-image": "^3.19.0",
+    "@tiptap/extension-list": "^3.19.0",
+    "@tiptap/extension-mention": "^2.0.0",
+    "@tiptap/extension-subscript": "^3.19.0",
+    "@tiptap/extension-superscript": "^3.19.0",
+    "@tiptap/extension-table": "^2.0.0",
+    "@tiptap/extension-text-align": "^3.19.0",
+    "@tiptap/extension-typography": "^3.19.0",
+    "@tiptap/extensions": "^3.19.0",
+    "@tiptap/pm": "^3.19.0",
+    "@tiptap/react": "^3.19.0",
+    "@tiptap/starter-kit": "^3.19.0",
+    "lodash.throttle": "^4.1.1",
+    "lowlight": "^2.3.0",
+    "lucide-react": "^0.563.0",
     "next": "^15.0.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "lucide-react": "^0.563.0",
-    "uuid": "^13.0.0"
+    "react-hotkeys-hook": "^5.2.4",
+    "uuid": "^13.0.0",
+    "tauri-apps/cli": "^2.1.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "@types/lodash.throttle": "^4.1.9",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "sass": "^1.97.3",
     "typescript": "~5.8.2",
-    "@tauri-apps/cli": "^2.1.0"
+    "tauri-apps/cli": "^2.1.0"
   }
 }
