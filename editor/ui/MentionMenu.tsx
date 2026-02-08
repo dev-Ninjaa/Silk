@@ -79,11 +79,11 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
     }
   }, [selectedIndex]);
 
-  if (filteredNotes.length === 0) {
-    const style = noTransform
-      ? { top: position.y, left: position.x, transform: 'none' }
-      : { top: position.y, left: position.x, transform: 'translateY(-100%) translateY(-10px)' }
+  const style = noTransform
+    ? { top: position.y, left: position.x, transform: 'none' }
+    : { top: position.y, left: position.x, transform: 'translateY(-100%) translateY(-10px)' };
 
+  if (filteredNotes.length === 0) {
     return (
       <div
         className="mention-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
@@ -98,10 +98,6 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
       </div>
     );
   }
-
-  const style = noTransform
-    ? { top: position.y, left: position.x, transform: 'none' }
-    : { top: position.y, left: position.x, transform: 'translateY(-100%) translateY(-10px)' }
 
   return (
     <div
