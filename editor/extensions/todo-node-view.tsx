@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { NodeViewWrapper, NodeViewContent, ReactNodeViewProps } from '@tiptap/react'
 
 interface TodoNodeViewProps extends ReactNodeViewProps {
@@ -8,19 +8,17 @@ interface TodoNodeViewProps extends ReactNodeViewProps {
 
 /**
  * NodeView for rendering todo items with interactive checkboxes
- * Handles checkbox state and persists to node attributes
+ * Derives checked state directly from node.attrs to stay synchronized with
+ * editor transactions, undo/redo, and collaborative changes
  */
 export const TodoNodeView: React.FC<TodoNodeViewProps> = ({
   node,
   updateAttributes,
 }) => {
-  const { checked } = node.attrs
-  const [isChecked, setIsChecked] = useState(checked || false)
+  const isChecked = node.attrs.checked || false
 
   const handleCheckChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newChecked = e.target.checked
-    setIsChecked(newChecked)
-    updateAttributes({ checked: newChecked })
+    updateAttributes({ checked: e.target.checked })
   }
 
   return (
