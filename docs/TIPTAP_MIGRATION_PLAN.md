@@ -400,6 +400,7 @@ The [simple-editor template](https://tiptap.dev/docs/ui-components/templates/sim
 2. **Install TipTap** packages
 3. **Start with Option B** (gradual migration) for safety
 4. **Test each component** as you migrate
+5. **Pilot**: create `/editor` route and `SimpleTipTapEditor` behind `feature/tiptap` branch to validate minimal flows and conversions
 
 ### If You Want to Stay Custom:
 1. **Debug current click issue** with console logs
