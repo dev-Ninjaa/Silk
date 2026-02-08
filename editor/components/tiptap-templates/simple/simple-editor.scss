@@ -76,7 +76,7 @@ body,
 
 .simple-editor-content .tiptap.ProseMirror.simple-editor {
   flex: 1;
-  padding: 3rem 3rem 30vh;
+  padding: 3rem 3rem 4rem;
 
   /* Inherit the wrapper background/text so switching themes updates editor space */
   background-color: transparent;
@@ -85,7 +85,7 @@ body,
 
 @media screen and (max-width: 480px) {
   .simple-editor-content .tiptap.ProseMirror.simple-editor {
-    padding: 1rem 1.5rem 30vh;
+    padding: 1rem 1.5rem 4rem;
   }
 }
 
