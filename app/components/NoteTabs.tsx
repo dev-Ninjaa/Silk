@@ -22,8 +22,21 @@ export const NoteTabs: React.FC<NoteTabsProps> = ({
   }
 
   return (
-    <div className="flex items-end w-full">
-      <div className="flex items-end gap-0 relative overflow-x-auto overflow-y-hidden">
+    <>
+      <style jsx>{`
+        .tabs-container::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      <div className="flex items-end w-full">
+        <div 
+          className="tabs-container flex items-end gap-0 relative overflow-x-auto overflow-y-hidden"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          } as React.CSSProperties}
+        >
         {openNotes.map((note) => {
           const isActive = note.id === currentNoteId;
 
@@ -89,5 +102,6 @@ export const NoteTabs: React.FC<NoteTabsProps> = ({
         })}
       </div>
     </div>
+    </>
   );
 };
