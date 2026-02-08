@@ -128,8 +128,8 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
 
               if (editorRect) {
                 setMentionMenuPosition({
-                  x: rect.left - editorRect.left,
-                  y: rect.top - editorRect.top
+                  x: rect.left - editorRect.left + 25,
+                  y: rect.top - editorRect.top - 250
                 });
                 setMentionMenuOpen(true);
               }
@@ -172,7 +172,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
     if (!sel) return;
 
     const textContent = element.textContent || '';
-    
+
     // Handle empty elements
     if (textContent.length === 0) {
       const range = document.createRange();
@@ -208,7 +208,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
 
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, { acceptNode });
     const range = document.createRange();
-    
+
     let bestNode: Node | null = null;
     let bestOffset = 0;
     let bestDistance = Infinity;
@@ -218,7 +218,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
     let node: Node | null;
     while ((node = walker.nextNode())) {
       const text = node.textContent || '';
-      
+
       // Store first/last node for fallback
       if (line === 'first' && !fallbackNode) {
         fallbackNode = node;
@@ -234,7 +234,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
       range.setEnd(node, 0);
       const startRect = range.getBoundingClientRect();
       const isStartOnTargetLine = startRect.top >= targetYMin && startRect.bottom <= targetYMax;
-      
+
       if (isStartOnTargetLine || text.length < 50) {
         // For short text or if we know we're on target line, check all positions
         for (let i = 0; i <= text.length; i++) {
@@ -326,24 +326,24 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
       const selection = window.getSelection();
       if (!selection || selection.rangeCount === 0) return null;
       const range = selection.getRangeAt(0);
-      
+
       // Try getClientRects first
       const rects = range.getClientRects();
       if (rects.length > 0) {
         return rects[0];
       }
-      
+
       // Fallback: insert a temporary span to get position
       const span = document.createElement('span');
       span.textContent = '\u200B'; // Zero-width space
       range.insertNode(span);
       const rect = span.getBoundingClientRect();
       span.parentNode?.removeChild(span);
-      
+
       // Normalize the range after removing span
       selection.removeAllRanges();
       selection.addRange(range);
-      
+
       return rect;
     };
 
@@ -368,12 +368,12 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
 
         if (prevBlockEl) {
           const cursorX = cursorRect.left;
-          
+
           // Directly manipulate DOM without triggering React cursor positioning
           prevBlockEl.focus();
           setFocusedBlockId(prevBlock.id);
           setCursorPosition(null); // null means "don't position cursor via React"
-          
+
           // Position cursor immediately after focus
           positionCursorAtX(prevBlockEl, cursorX, 'last');
         }
@@ -401,12 +401,12 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
 
         if (nextBlockEl) {
           const cursorX = cursorRect.left;
-          
+
           // Directly manipulate DOM without triggering React cursor positioning
           nextBlockEl.focus();
           setFocusedBlockId(nextBlock.id);
           setCursorPosition(null); // null means "don't position cursor via React"
-          
+
           // Position cursor immediately after focus
           positionCursorAtX(nextBlockEl, cursorX, 'first');
         }
@@ -437,7 +437,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
       if (currentBlock) {
         // Remove the "/" from content immediately
         const contentWithoutSlash = currentBlock.content.slice(0, -1); // Remove last character (/)
-        const updatedBlocks = note.blocks.map(b => 
+        const updatedBlocks = note.blocks.map(b =>
           b.id === id ? { ...b, content: contentWithoutSlash } : b
         );
         onUpdateBlocks(note.id, updatedBlocks);
@@ -451,9 +451,28 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
           const editorRect = document.querySelector('.max-w-5xl')?.getBoundingClientRect();
 
           if (editorRect) {
+            const menuHeight = 320; // approximate max height
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            // Default to below if there's enough space, otherwise above
+            // However, prefer above if we're close to the bottom to avoid cramping
+            const placeAbove = spaceBelow < menuHeight && spaceAbove > menuHeight;
+
+            // "Move it slightly upward from the bottom" -> handled by placeAbove logic or adding padding
+            // "Move it slightly to the right" -> increase X offset
+
+            let topPosition;
+            if (placeAbove) {
+              topPosition = rect.top - editorRect.top - menuHeight - 10;
+            } else {
+              // Place below
+              topPosition = rect.bottom - editorRect.top + 10;
+            }
+
             setMenuPosition({
-              x: rect.left - editorRect.left,
-              y: rect.bottom - editorRect.top + 10
+              x: rect.left - editorRect.left + 50, // Moved +25 to +50 (slightly to right)
+              y: topPosition
             });
             setMenuOpen(true);
           }
@@ -466,21 +485,21 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
       if (!e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // For list types: if empty, convert to text; if has content, continue list
         if (currentBlock && (currentBlock.type === 'bullet-list' || currentBlock.type === 'numbered-list' || currentBlock.type === 'todo')) {
           if (currentBlock.content.trim() === '') {
             // Empty list item - convert to regular text and stop listing
-            const updatedBlocks = note.blocks.map(b => 
+            const updatedBlocks = note.blocks.map(b =>
               b.id === id ? { ...b, type: 'text' as BlockType, content: '' } : b
             );
             onUpdateBlocks(note.id, updatedBlocks);
           } else {
             // Has content - create new list item
-            const newBlock: Block = { 
-              id: generateId(), 
-              type: currentBlock.type, 
-              content: '' 
+            const newBlock: Block = {
+              id: generateId(),
+              type: currentBlock.type,
+              content: ''
             };
             const currentIndex = note.blocks.findIndex(b => b.id === id);
             const newBlocks = [...note.blocks];
@@ -511,7 +530,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
         // Cursor at start - merge with previous block
         e.preventDefault();
         const prevBlock = note.blocks[currentIndex - 1];
-        
+
         // Merge content (ensure both values are strings)
         const prevContent = prevBlock.content || '';
         const currentContent = currentBlock.content || '';
@@ -519,7 +538,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
         const newBlocks = note.blocks
           .map(b => b.id === prevBlock.id ? { ...b, content: mergedContent } : b)
           .filter(b => b.id !== id);
-        
+
         onUpdateBlocks(note.id, newBlocks);
         // Place cursor at the end of the merged previous block to avoid relying on string length
         focusBlock(prevBlock.id, 'end');
@@ -576,7 +595,7 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
 
     onUpdateBlocks(note.id, updatedBlocks);
     setMentionMenuOpen(false);
-    
+
     // Position cursor after mention is rendered (consistent with other cursor positioning)
     const cursorPosAfterMention = mentionStartPos + mentionText.length;
     requestAnimationFrame(() => {
@@ -591,8 +610,8 @@ export const Editor: React.FC<EditorProps> = ({ note, allNotes = [], onUpdateTit
   };
 
   return (
-    <div 
-      className="max-w-5xl mx-auto px-16 py-12 pb-48 relative"
+    <div
+      className="max-w-5xl mx-auto px-16 py-12 pb-12 relative"
       onKeyDown={(e) => {
         // Prevent all keyboard events from bubbling to sidebar
         e.stopPropagation();
