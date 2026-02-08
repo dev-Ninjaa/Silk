@@ -130,8 +130,8 @@ export function useElementRect({
     window.addEventListener("resize", handleUpdate, true)
 
     cleanup.push(() => {
-      window.removeEventListener("scroll", handleUpdate)
-      window.removeEventListener("resize", handleUpdate)
+      window.removeEventListener("scroll", handleUpdate, true)
+      window.removeEventListener("resize", handleUpdate, true)
     })
 
     return () => {
