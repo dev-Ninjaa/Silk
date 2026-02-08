@@ -88,3 +88,35 @@ body,
     padding: 1rem 1.5rem 30vh;
   }
 }
+
+/* Mention styles */
+.simple-editor .mention {
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  background-color: rgba(37, 99, 235, 0.1);
+  transition: all 0.15s ease;
+}
+
+.simple-editor .mention:hover {
+  color: #1d4ed8;
+  background-color: rgba(37, 99, 235, 0.15);
+  text-decoration: underline;
+}
+
+/* Mention menu styles */
+.mention-menu {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+}
+
+.mention-menu button {
+  transition: background-color 0.15s ease;
+}
+
+.mention-menu button:hover {
+  background-color: #f3f4f6;
+}

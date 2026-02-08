@@ -5,7 +5,8 @@ import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
-import { Image } from "@tiptap/extension-image"
+import ImageExtension from "@/editor/extensions/image-extension"
+import TableExtension from "@/editor/extensions/table-extension"
 import { TaskItem, TaskList } from "@tiptap/extension-list"
 import { TextAlign } from "@tiptap/extension-text-align"
 import { Typography } from "@tiptap/extension-typography"
@@ -13,6 +14,8 @@ import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
 import { Selection } from "@tiptap/extensions"
+import { Placeholder } from "@tiptap/extension-placeholder"
+
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -33,6 +36,7 @@ import "@/components/tiptap-node/list-node/list-node.scss"
 import "@/components/tiptap-node/image-node/image-node.scss"
 import "@/components/tiptap-node/heading-node/heading-node.scss"
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
+import "@/components/tiptap-node/table-node/table-node.scss"
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
@@ -66,6 +70,10 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
+import SlashSuggestion from "@/editor/extensions/slash-suggestion"
+import MentionSuggestion from "@/editor/extensions/mention-suggestion"
+
+// Mention logic extracted to a standalone `mention-suggestion` extension for cleaner testing in SimpleEditor
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/editor/lib/tiptap-utils"
@@ -191,6 +199,7 @@ export function SimpleEditor() {
   )
   const toolbarRef = useRef<HTMLDivElement>(null)
 
+
   const editor = useEditor({
     immediatelyRender: false,
     editorProps: {
@@ -215,7 +224,11 @@ export function SimpleEditor() {
       TaskList,
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
-      Image,
+      Placeholder.configure({
+        placeholder: "Write or type '/' for commands...",
+      }),
+      ImageExtension,
+      ...TableExtension,
       Typography,
       Superscript,
       Subscript,
@@ -227,6 +240,9 @@ export function SimpleEditor() {
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
+      MentionSuggestion,
+
+      SlashSuggestion,
     ],
     content,
   })
@@ -235,6 +251,53 @@ export function SimpleEditor() {
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
   })
+
+  // Debugging: log editor events and plugin list to trace suggestion activation
+  useEffect(() => {
+    if (!editor) return
+
+    
+
+    const onSelectionUpdate = () => {
+      try {
+        const { from } = editor.state.selection
+        const charBefore = editor.state.doc.textBetween(Math.max(0, from - 1), from)
+        // selectionUpdate debug removed
+
+        const pluginKeys = editor.state.plugins.map((p: any) => p.key && p.key.toString ? p.key.toString() : p.key)
+        // plugins debug removed
+      } catch (err) {
+        console.error('[Editor] selectionUpdate error', err)
+      }
+    }
+
+    const onTransaction = () => {
+      try {
+        // transaction debug removed
+      } catch (err) {
+        console.error('[Editor] transaction error', err)
+      }
+    }
+
+    editor.on('selectionUpdate', onSelectionUpdate)
+    editor.on('transaction', onTransaction)
+
+    // Expose editor for debugging in console
+    ;(window as any).__pulmEditor = editor
+    // editor exposed for debugging in window.__pulmEditor
+
+    // Mention debug helpers removed. Use the standalone `mention-suggestion` extension for testing and debug flows.
+
+    return () => {
+      editor.off('selectionUpdate', onSelectionUpdate)
+      editor.off('transaction', onTransaction)
+      try {
+        if ((window as any).__pulmEditor === editor) delete (window as any).__pulmEditor
+      } catch (e) {}
+    }
+  }, [editor])
+
+
 
   useEffect(() => {
     if (!isMobile && mobileView !== "main") {
@@ -274,6 +337,7 @@ export function SimpleEditor() {
           role="presentation"
           className="simple-editor-content"
         />
+
       </EditorContext.Provider>
     </div>
   )
