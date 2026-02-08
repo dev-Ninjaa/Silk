@@ -352,11 +352,26 @@ export function selectionWithinConvertibleTypes(
 }
 
 /**
+ * Converts a Blob/File to a Base64 data URL for persistent storage
+ * @param file The file to convert
+ * @returns Promise resolving to a data URL (base64)
+ */
+export const fileToBase64 = (file: File | Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
  * Handles image upload with progress tracking and abort capability
+ * Converts uploaded image to Base64 for localStorage persistence
  * @param file The file to upload
  * @param onProgress Optional callback for tracking upload progress
  * @param abortSignal Optional AbortSignal for cancelling the upload
- * @returns Promise resolving to the URL of the uploaded image
+ * @returns Promise resolving to a Base64 data URL (persistable)
  */
 export const handleImageUpload = async (
   file: File,
@@ -384,7 +399,15 @@ export const handleImageUpload = async (
     onProgress?.({ progress })
   }
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  // Convert to Base64 for persistent storage (survives localStorage save/reload)
+  try {
+    const base64 = await fileToBase64(file)
+    return base64
+  } catch (err) {
+    console.error("Failed to convert image to base64:", err)
+    // fallback to previous placeholder path if conversion fails
+    return "/images/tiptap-ui-placeholder-image.jpg"
+  }
 }
 
 type ProtocolOptions = {
