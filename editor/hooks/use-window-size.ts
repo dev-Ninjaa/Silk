@@ -81,11 +81,13 @@ export function useWindowSize(): WindowSizeState {
     if (!visualViewport) return
 
     visualViewport.addEventListener("resize", handleViewportChange)
+    visualViewport.addEventListener("scroll", handleViewportChange)
 
     handleViewportChange()
 
     return () => {
       visualViewport.removeEventListener("resize", handleViewportChange)
+      visualViewport.removeEventListener("scroll", handleViewportChange)
     }
   }, [handleViewportChange])
 
