@@ -38,7 +38,6 @@ import "@/components/tiptap-node/list-node/list-node.scss"
 import "@/components/tiptap-node/image-node/image-node.scss"
 import "@/components/tiptap-node/heading-node/heading-node.scss"
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
-import "@/components/tiptap-node/table-node/table-node.scss"
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
 // --- Types ---
