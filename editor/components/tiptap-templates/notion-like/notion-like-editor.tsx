@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useEffect } from "react"
+import { useContext, useEffect, useState, useRef } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { Doc as YDoc } from "yjs"
 import type { TiptapCollabProvider } from "@tiptap-pro/provider"
@@ -91,6 +91,9 @@ import {
   useToc,
 } from "@/components/tiptap-node/toc-node/context/toc-context"
 import { ListNormalizationExtension } from "@/components/tiptap-extension/list-normalization-extension"
+
+// --- Hyperlink Components ---
+import { HyperlinkHoverPopover, LinkEditDialog, HyperlinkEventHandler, HyperlinkProvider } from "@/components/tiptap-ui/hyperlink"
 
 export interface NotionEditorProps {
   room: string
@@ -186,6 +189,7 @@ export function EditorProvider(props: EditorProviderProps) {
 
   const { user } = useUser()
   const { setTocContent } = useToc()
+  const [isLinkEditOpen, setIsLinkEditOpen] = useState(false)
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -312,27 +316,40 @@ export function EditorProvider(props: EditorProviderProps) {
 
   return (
     <div className="notion-like-editor-wrapper">
-      <EditorContext.Provider value={{ editor }}>
-        <NotionEditorHeader />
-        <div className="notion-like-editor-layout">
-          <EditorContentArea />
-          <TocSidebar topOffset={48} />
-        </div>
+      <HyperlinkProvider>
+        <EditorContext.Provider value={{ editor }}>
+          <NotionEditorHeader />
+          <div className="notion-like-editor-layout">
+            <EditorContentArea />
+            <TocSidebar topOffset={48} />
+          </div>
 
-        <TableExtendRowColumnButtons />
-        <TableHandle />
-        <TableSelectionOverlay
-          showResizeHandles={true}
-          cellMenu={(props) => (
-            <TableCellHandleMenu
-              editor={props.editor}
-              onMouseDown={(e) => props.onResizeStart?.("br")(e)}
-            />
-          )}
+          <TableExtendRowColumnButtons />
+          <TableHandle />
+          <TableSelectionOverlay
+            showResizeHandles={true}
+            cellMenu={(props) => (
+              <TableCellHandleMenu
+                editor={props.editor}
+                onMouseDown={(e) => props.onResizeStart?.("br")(e)}
+              />
+            )}
+          />
+
+          <HyperlinkEventHandler />
+        </EditorContext.Provider>
+
+        {/* Link Hover Popover */}
+        <HyperlinkHoverPopover
+          onEdit={() => setIsLinkEditOpen(true)}
         />
-      </EditorContext.Provider>
 
-      
+        <LinkEditDialog 
+          editor={editor}
+          isOpen={isLinkEditOpen}
+          onClose={() => setIsLinkEditOpen(false)}
+        />
+      </HyperlinkProvider>
     </div>
   )
 }

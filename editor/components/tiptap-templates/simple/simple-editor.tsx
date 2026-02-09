@@ -60,6 +60,9 @@ import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 
+// --- Hyperlink Components ---
+import { HyperlinkHoverPopover, LinkEditDialog, HyperlinkEventHandler, HyperlinkProvider } from "@/components/tiptap-ui/hyperlink"
+
 // --- Icons ---
 import { ArrowLeftIcon } from "@/editor/components/tiptap-icons/arrow-left-icon"
 import { HighlighterIcon } from "@/editor/components/tiptap-icons/highlighter-icon"
@@ -202,6 +205,8 @@ export function SimpleEditor() {
     "main"
   )
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const [isLinkEditOpen, setIsLinkEditOpen] = useState(false)
+  const linkPopoverRef = useRef<HTMLDivElement>(null)
 
 
   const editor = useEditor({
@@ -320,41 +325,55 @@ export function SimpleEditor() {
 
   return (
     <div className="simple-editor-wrapper">
-      <EditorContext.Provider value={{ editor }}>
-        <Toolbar
-          ref={toolbarRef}
-          style={{
-            ...(isMobile
-              ? {
-                  bottom: `calc(100% - ${height - rect.y}px)`,
-                }
-              : {}),
-          }}
-        >
-          {mobileView === "main" ? (
-            <MainToolbarContent
-              onHighlighterClick={() => setMobileView("highlighter")}
-              onLinkClick={() => setMobileView("link")}
-              isMobile={isMobile}
-            />
-          ) : (
-            <MobileToolbarContent
-              type={mobileView === "highlighter" ? "highlighter" : "link"}
-              onBack={() => setMobileView("main")}
-            />
-          )}
-        </Toolbar>
+      <HyperlinkProvider>
+        <EditorContext.Provider value={{ editor }}>
+          <Toolbar
+            ref={toolbarRef}
+            style={{
+              ...(isMobile
+                ? {
+                    bottom: `calc(100% - ${height - rect.y}px)`,
+                  }
+                : {}),
+            }}
+          >
+            {mobileView === "main" ? (
+              <MainToolbarContent
+                onHighlighterClick={() => setMobileView("highlighter")}
+                onLinkClick={() => setMobileView("link")}
+                isMobile={isMobile}
+              />
+            ) : (
+              <MobileToolbarContent
+                type={mobileView === "highlighter" ? "highlighter" : "link"}
+                onBack={() => setMobileView("main")}
+              />
+            )}
+          </Toolbar>
 
-        <EditorContent
+          <EditorContent
+            editor={editor}
+            role="presentation"
+            className="simple-editor-content"
+          >
+            <FloatingToolbar />
+            <EmojiDropdownMenu />
+          </EditorContent>
+
+          <HyperlinkEventHandler />
+        </EditorContext.Provider>
+
+        {/* Link Hover Popover */}
+        <HyperlinkHoverPopover
+          onEdit={() => setIsLinkEditOpen(true)}
+        />
+
+        <LinkEditDialog 
           editor={editor}
-          role="presentation"
-          className="simple-editor-content"
-        >
-          <FloatingToolbar />
-          <EmojiDropdownMenu />
-        </EditorContent>
-
-      </EditorContext.Provider>
+          isOpen={isLinkEditOpen}
+          onClose={() => setIsLinkEditOpen(false)}
+        />
+      </HyperlinkProvider>
     </div>
   )
 }
