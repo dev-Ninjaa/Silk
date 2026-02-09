@@ -96,19 +96,25 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
 
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
+          if (filteredItems.length > 0) {
+            setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
+          }
           return
         }
 
         if (e.key === 'ArrowUp') {
           e.preventDefault();
-          setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
+          if (filteredItems.length > 0) {
+            setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
+          }
           return
         }
 
         if (e.key === 'Enter') {
           e.preventDefault();
-          if (filteredItems[selectedIndex]) onSelect(filteredItems[selectedIndex].id);
+          if (filteredItems.length > 0 && filteredItems[selectedIndex]) {
+            onSelect(filteredItems[selectedIndex].id);
+          }
           return
         }
 
