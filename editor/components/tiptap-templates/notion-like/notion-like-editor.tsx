@@ -98,8 +98,8 @@ export interface NotionEditorProps {
 }
 
 export interface EditorProviderProps {
-  provider: TiptapCollabProvider
-  ydoc: YDoc
+  provider: TiptapCollabProvider | null
+  ydoc: YDoc | null
   placeholder?: string
   aiToken: string | null
 }
@@ -205,11 +205,12 @@ export function EditorProvider(props: EditorProviderProps) {
       }),
       HorizontalRule,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Collaboration.configure({ document: ydoc }),
-      CollaborationCaret.configure({
+      // Conditionally include collaboration features
+      ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
+      ...(provider ? [CollaborationCaret.configure({
         provider,
         user: { id: user.id, name: user.name, color: user.color },
-      }),
+      })] : []),
       Placeholder.configure({
         placeholder,
         emptyNodeClass: "is-empty with-slash",
@@ -285,9 +286,10 @@ export function EditorProvider(props: EditorProviderProps) {
       TocNode.configure({
         topOffset: 48,
       }),
-      Ai.configure({
+      // Conditionally include AI features
+      ...(aiToken ? [Ai.configure({
         appId: TIPTAP_AI_APP_ID,
-        token: aiToken || undefined,
+        token: aiToken,
         autocompletion: false,
         showDecorations: true,
         hideDecorationsOnStreamEnd: false,
@@ -304,13 +306,9 @@ export function EditorProvider(props: EditorProviderProps) {
           context.editor.commands.aiGenerationSetIsLoading(false)
           context.editor.commands.aiGenerationHasMessage(hasMessage)
         },
-      }),
+      })] : []),
     ],
   })
-
-  if (!editor) {
-    return <LoadingSpinner />
-  }
 
   return (
     <div className="notion-like-editor-wrapper">
@@ -368,10 +366,8 @@ export function NotionEditorContent({ placeholder }: { placeholder?: string }) {
   const { provider, ydoc } = useCollab()
   const { aiToken } = useAi()
 
-  if (!provider || !aiToken) {
-    return <LoadingSpinner />
-  }
-
+  // Proceed with editor even if provider or aiToken are not available
+  // This allows the editor to work without cloud collaboration/AI features
   return (
     <EditorProvider
       provider={provider}
