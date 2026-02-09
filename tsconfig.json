@@ -29,7 +29,10 @@
       "@/hooks/*": [
         "./hooks/*",
         "./editor/hooks/*"
-      ],    },
+      ],
+      "@/lib/*": [
+        "./editor/lib/*"
+      ]},
     "incremental": true,
     "plugins": [
       {
