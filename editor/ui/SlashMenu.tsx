@@ -69,66 +69,14 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent any keyboard events from bubbling when menu is open
-      e.stopPropagation();
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
-        return
-      }
-
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
-        return
-      }
-
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        if (filteredItems[selectedIndex]) onSelect(filteredItems[selectedIndex].id);
-        return
-      }
-
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return
-      }
-
-      // handle printable characters and Backspace for filtering in uncontrolled mode
-      if (!items) {
-        if (e.key === 'Backspace') {
-          e.preventDefault();
-          setInternalQuery((q) => q.slice(0, -1));
-          setSelectedIndex(0);
-          return
-        }
-
-        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
-          e.preventDefault();
-          setInternalQuery((q) => (q + e.key).slice(0, 64));
-          setSelectedIndex(0);
-          return
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIndex, onSelect, onClose, items, filteredItems.length]);
-
-  useEffect(() => {
     const menu = menuRef.current;
     if (menu) {
       const selectedElement = menu.querySelector('[data-selected="true"]') as HTMLElement | null;
       if (selectedElement) {
-        if (selectedElement.offsetTop < menu.scrollTop) {
-          menu.scrollTop = selectedElement.offsetTop;
-        } else if (selectedElement.offsetTop + selectedElement.offsetHeight > menu.scrollTop + menu.offsetHeight) {
-          menu.scrollTop = selectedElement.offsetTop + selectedElement.offsetHeight - menu.offsetHeight;
-        }
+        selectedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        });
       }
     }
   }, [selectedIndex, controlledQuery, internalQuery]);
@@ -137,7 +85,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
     <div
       ref={menuRef}
       tabIndex={-1}
-      className="slash-menu absolute z-50 w-44 bg-white rounded-md shadow-md overflow-hidden flex flex-col max-h-[320px]"
+      className="slash-menu absolute z-50 w-44 bg-white rounded-md shadow-lg overflow-hidden flex flex-col max-h-[320px] outline-none"
       style={{
         top: position.y,
         left: position.x
@@ -145,9 +93,66 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
       onKeyDown={(e) => {
         // Prevent keyboard events from bubbling to parent
         e.stopPropagation();
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (filteredItems.length > 0) {
+            setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
+          }
+          return
+        }
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (filteredItems.length > 0) {
+            setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
+          }
+          return
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (filteredItems.length > 0 && filteredItems[selectedIndex]) {
+            onSelect(filteredItems[selectedIndex].id);
+          }
+          return
+        }
+
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          onClose();
+          return
+        }
+
+        // handle printable characters and Backspace for filtering in uncontrolled mode
+        if (!items) {
+          if (e.key === 'Backspace') {
+            e.preventDefault();
+            setInternalQuery((q) => q.slice(0, -1));
+            setSelectedIndex(0);
+            return
+          }
+
+          if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+            e.preventDefault();
+            setInternalQuery((q) => (q + e.key).slice(0, 64));
+            setSelectedIndex(0);
+            return
+          }
+        }
       }}
     >
-      <div className="flex flex-col divide-y divide-gray-100 overflow-y-auto">
+      {/* header placeholder removed to keep UI compact */}
+      
+
+      <div 
+        className="flex flex-col divide-y divide-gray-100 overflow-y-auto" 
+        style={{ 
+          scrollbarWidth: 'none', 
+          msOverflowStyle: 'none',
+          WebkitScrollbar: { display: 'none' } as any
+        }}
+      >
         {Object.keys(grouped).map((section) => (
           <div key={section} className="px-0">
             <div className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase">{section}</div>

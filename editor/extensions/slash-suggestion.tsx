@@ -14,6 +14,8 @@ export const SlashSuggestion = Extension.create({
   name: 'slashSuggestion',
 
   addProseMirrorPlugins() {
+    let menuOpen = false
+
     return [
       (Suggestion as any)({
         pluginKey: new PluginKey('slashSuggestion'),
@@ -26,6 +28,13 @@ export const SlashSuggestion = Extension.create({
         items: ({ query }: any) => {
           const q = (query || '').toLowerCase()
           return MENU_ITEMS.filter((it) => it.label.toLowerCase().includes(q)) as MenuItem[]
+        },
+        onKeyDown: ({ event }: any) => {
+          if (menuOpen) {
+            // Let the menu handle the keys
+            return true
+          }
+          return false
         },
         render: () => {
           let container: HTMLElement | null = null
@@ -69,6 +78,7 @@ export const SlashSuggestion = Extension.create({
 
           return {
             onStart: (props: any) => {
+              menuOpen = true
               currentProps = props
               container = document.createElement('div')
               container.style.position = 'absolute'
@@ -209,6 +219,7 @@ export const SlashSuggestion = Extension.create({
               return false
             },
             onExit: () => {
+              menuOpen = false
               if (root) {
                 root.unmount()
                 root = null
