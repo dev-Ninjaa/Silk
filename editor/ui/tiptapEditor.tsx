@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from "react"
-import { EditorContent, useEditor } from "@tiptap/react"
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 
 // --- TipTap Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
@@ -38,6 +38,10 @@ import { convertTipTapToBlocks } from "@/editor/lib/convertTipTapToBlocks"
 // --- Custom Nodes & Extensions ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
+import { UiState } from "@/components/tiptap-extension/ui-state-extension"
+
+// --- Tiptap UI ---
+import { DragContextMenu } from "@/components/tiptap-ui/drag-context-menu"
 
 // --- Styles ---
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
@@ -54,6 +58,9 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 // --- UI Components ---
 import { FloatingToolbar } from "@/editor/ui/FloatingToolbar"
 import { EmojiDropdownMenu } from "@/editor/components/tiptap-ui/emoji-dropdown-menu"
+
+// --- Hooks ---
+import { useUiEditorState } from "@/editor/hooks/use-ui-editor-state"
 
 // --- Hyperlink Components ---
 import { HyperlinkHoverPopover, LinkEditDialog, HyperlinkEventHandler, HyperlinkProvider } from "@/components/tiptap-ui/hyperlink"
@@ -171,6 +178,7 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
+      UiState,
       SlashSuggestion,               // ✅ Slash suggestions (/)
       createMentionSuggestion(() => {
         // Dynamic getter: returns all notes excluding the current one
@@ -193,6 +201,8 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
     },
   })
 
+  const { isDragging } = useUiEditorState(editor)
+
   // Update editor content when note.blocks change externally
   // (e.g., when loading a different note)
   useEffect(() => {
@@ -204,8 +214,18 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
 
   return (
     <div className="tiptap-note-editor-wrapper">
-      <HyperlinkProvider>
-        <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+      <EditorContext.Provider value={{ editor }}>
+        <HyperlinkProvider>
+        <EditorContent
+          editor={editor}
+          role="presentation"
+          className="simple-editor-content"
+          style={{
+            cursor: isDragging ? "grabbing" : "auto",
+          }}
+        >
+          <DragContextMenu />
+        </EditorContent>
         <FloatingToolbar editor={editor} />
         <EmojiDropdownMenu editor={editor} />
         {editor && <TableHandle editor={editor} />}
@@ -218,6 +238,7 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
           onClose={() => setIsLinkEditOpen(false)}
         />
       </HyperlinkProvider>
+      </EditorContext.Provider>
     </div>
   )
 }

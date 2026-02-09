@@ -32,6 +32,7 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
+import { UiState } from "@/components/tiptap-extension/ui-state-extension"
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
 import "@/components/tiptap-node/code-block-node/code-block-node.scss"
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss"
@@ -46,6 +47,7 @@ import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
+import { DragContextMenu } from "@/components/tiptap-ui/drag-context-menu"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -72,6 +74,7 @@ import { LinkIcon } from "@/editor/components/tiptap-icons/link-icon"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
+import { useUiEditorState } from "@/editor/hooks/use-ui-editor-state"
 
 // --- Components ---
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
@@ -258,12 +261,15 @@ export function SimpleEditor() {
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
+      UiState,
       MentionSuggestion,
 
       SlashSuggestion,
     ],
     content,
   })
+
+  const { isDragging } = useUiEditorState(editor)
 
   const rect = useCursorVisibility({
     editor,
@@ -355,9 +361,13 @@ export function SimpleEditor() {
             editor={editor}
             role="presentation"
             className="simple-editor-content"
+            style={{
+              cursor: isDragging ? "grabbing" : "auto",
+            }}
           >
             <FloatingToolbar />
             <EmojiDropdownMenu />
+            <DragContextMenu />
           </EditorContent>
 
           <HyperlinkEventHandler />
