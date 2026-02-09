@@ -288,7 +288,6 @@ export default function Home() {
     }
 
     setCurrentNoteId(noteId);
-    setIsReadMode(false); // Reset to edit mode when selecting a note
     setSelectedCategoryId(note.categoryId);
     setSelectedSubCategoryId(note.subCategoryId || null);
     setNotes(notes.map(n =>
@@ -312,7 +311,6 @@ export default function Home() {
     }
 
     setCurrentNoteId(noteId);
-    setIsReadMode(false);
     setSelectedCategoryId(note.categoryId);
     setSelectedSubCategoryId(note.subCategoryId || null);
     setNotes(notes.map(n =>
@@ -363,7 +361,6 @@ export default function Home() {
       setIsCommandPaletteOpen(true);
     } else {
       setViewMode(mode);
-      setIsReadMode(false); // Reset to edit mode when changing view
       if (mode !== 'library') {
         setCurrentNoteId(null);
       }
@@ -695,10 +692,8 @@ export default function Home() {
                     subCategoryName={getCurrentSubCategory()?.name}
                     noteName={currentNote?.title}
                     isPinned={currentNote?.isPinned}
-                    isReadMode={isReadMode}
                     activeTab="pages"
                     onTogglePin={() => currentNote && handleTogglePin(currentNote.id)}
-                    onToggleReadMode={() => setIsReadMode(!isReadMode)}
                   />
 
                   {/* Content Divider */}
@@ -713,9 +708,8 @@ export default function Home() {
                   />
                   <div className="flex-1 overflow-y-auto">
                     <NoteView
-                      isReadMode={isReadMode}
                       note={currentNote}
-                      allNotes={[
+                      allNotes={[ 
                         ...notes.map(n => ({ id: n.id, title: n.title, isDeleted: n.isDeleted })),
                         ...assets.filter(a => !a.isDeleted).map(a => ({
                           id: a.id,
