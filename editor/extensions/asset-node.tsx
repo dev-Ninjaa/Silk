@@ -23,10 +23,17 @@ export const AssetNode = Node.create({
         }),
       },
       type: {
-        default: 'image', // 'image' | 'video' | 'audio'
+        default: 'image', // 'image' | 'video' | 'audio' | 'file'
         parseHTML: element => element.getAttribute('data-type'),
         renderHTML: attributes => ({
           'data-type': attributes.type,
+        }),
+      },
+      src: {
+        default: '',
+        parseHTML: element => element.getAttribute('data-src'),
+        renderHTML: attributes => ({
+          'data-src': attributes.src || '',
         }),
       },
       alt: {
@@ -69,9 +76,10 @@ export const AssetNode = Node.create({
 export function insertAssetNode(
   editor: any,
   assetId: string,
-  type: 'image' | 'video' | 'audio',
+  type: 'image' | 'video' | 'audio' | 'file',
   alt?: string,
-  title?: string
+  title?: string,
+  src?: string
 ) {
   if (!editor) return false
   try {
@@ -83,6 +91,7 @@ export function insertAssetNode(
         attrs: {
           assetId,
           type,
+          src: src || '',
           alt: alt || '',
           title: title || '',
         },

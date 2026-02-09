@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "pulm.notes",
@@ -35,6 +36,7 @@
         "@tiptap/extension-text-style": "^3.19.0",
         "@tiptap/extension-typography": "^3.19.0",
         "@tiptap/extension-unique-id": "^3.19.0",
+        "@tiptap/extension-youtube": "^3.19.0",
         "@tiptap/extensions": "^3.19.0",
         "@tiptap/pm": "^3.19.0",
         "@tiptap/react": "^3.19.0",
@@ -470,6 +472,8 @@
     "@tiptap/extension-underline": ["@tiptap/extension-underline@3.19.0", "", { "peerDependencies": { "@tiptap/core": "^3.19.0" } }, "sha512-800MGEWfG49j10wQzAFiW/ele1HT04MamcL8iyuPNu7ZbjbGN2yknvdrJlRy7hZlzIrVkZMr/1tz62KN33VHIw=="],
 
     "@tiptap/extension-unique-id": ["@tiptap/extension-unique-id@3.19.0", "", { "dependencies": { "uuid": "^10.0.0" }, "peerDependencies": { "@tiptap/core": "^3.19.0", "@tiptap/pm": "^3.19.0" } }, "sha512-gzRW4LHkRq90k8DXte0GqkUj10d5032xf73+i5B4TeNTFiQup4LTPBHmx9WAum6up9Uz3qCZ7fq0pkkRoyT8zg=="],
+
+    "@tiptap/extension-youtube": ["@tiptap/extension-youtube@3.19.0", "", { "peerDependencies": { "@tiptap/core": "^3.19.0" } }, "sha512-/3Z/jw9VbD3WrS1cOcxKUN0oMVnX9NVSekVG4uJHZYs5LhG2tbmUkBYNzj4oJcZcuJ4WPTD1EaAVEgNVffaoJg=="],
 
     "@tiptap/extensions": ["@tiptap/extensions@3.19.0", "", { "peerDependencies": { "@tiptap/core": "^3.19.0", "@tiptap/pm": "^3.19.0" } }, "sha512-ZmGUhLbMWaGqnJh2Bry+6V4M6gMpUDYo4D1xNux5Gng/E/eYtc+PMxMZ/6F7tNTAuujLBOQKj6D+4SsSm457jw=="],
 

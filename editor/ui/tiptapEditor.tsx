@@ -92,7 +92,7 @@ interface TipTapNoteEditorProps {
  * 
  * Converts Note.blocks ↔ TipTap JSON for editing, handles persistence via onUpdateBlocks.
  */
-export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateBlocks, onOpenNote }: TipTapNoteEditorProps) {
+export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTitle, onUpdateBlocks, onOpenNote }: TipTapNoteEditorProps & { assets?: any[] }) {
   const editorRef = useRef<any>(null)
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isLinkEditOpen, setIsLinkEditOpen] = useState(false)
@@ -132,6 +132,55 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
         }
         return false
       },
+
+      // Intercept drops inside the editor to handle assets from sidebar/library
+      handleDOMEvents: {
+        drop: (view: any, event: DragEvent) => {
+          try {
+            const assetId = event.dataTransfer?.getData('text/plain') || ''
+            const itemType = event.dataTransfer?.getData('itemType') || ''
+            if (itemType === 'asset' && assetId) {
+              // Find the asset from the props (passed from NoteView)
+              const asset = assets?.find((a: any) => a.id === assetId)
+              if (!asset || asset.isDeleted) return false
+
+              // Map asset types to supported node types; default to 'file' for others
+              const type = asset.type === 'video' ? 'video' : asset.type === 'audio' ? 'audio' : asset.type === 'image' ? 'image' : 'file'
+
+              try {
+                // Prefer the upload source dataUrl when available to avoid server requests
+                const src = asset.source?.kind === 'file' ? asset.source?.dataUrl : undefined
+
+                // Import and use helper to insert asset node (with optional src)
+                import('@/editor/extensions/asset-node').then(({ insertAssetNode }) => {
+                  if (insertAssetNode && editor) {
+                    insertAssetNode(editor, assetId, type as any, asset.name, asset.name, src)
+                  }
+                }).catch((err) => {
+                  // Fallback raw insertion
+                  if (editor) {
+                    const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.to
+                    const node = view.state.schema.nodes.asset.create({ assetId, type, src: src || '', alt: asset.name, title: asset.name })
+                    const tr = view.state.tr.insert(pos, node)
+                    view.dispatch(tr)
+                  }
+                })
+
+                event.preventDefault()
+                event.stopPropagation()
+                return true
+              } catch (err) {
+                console.error('[Drop] insert asset error', err)
+                return false
+              }
+            }
+          } catch (err) {
+            console.error('[Drop] unexpected error', err)
+          }
+
+          return false
+        }
+      }
     },
     extensions: [
       StarterKit.configure({

@@ -20,8 +20,36 @@ export const AssetNodeView: React.FC<AssetNodeViewProps> = ({
 }) => {
   const { assetId, type, alt, title } = node.attrs
 
-  // Construct asset URL (adjust path based on your asset storage)
-  const assetUrl = `/assets/${assetId}`
+  // Prefer embedded src (dataUrl) if provided; otherwise fall back to server path
+  const [resolvedSrc, setResolvedSrc] = React.useState<string | null>(
+    node.attrs.src && node.attrs.src.length > 0 ? node.attrs.src : null
+  )
+
+  // If we don't have a src but have an assetId fallback path, try to resolve from localStorage asset store
+  React.useEffect(() => {
+    if (resolvedSrc) return
+
+    // If attrs.src not provided, check if local asset exists in LocalStorage store
+    if (assetId) {
+      import('@/app/lib/persistence/LocalStorageAssetStore').then(({ LocalStorageAssetStore }) => {
+        const store = new LocalStorageAssetStore()
+        store.loadAssets().then((allAssets) => {
+          const match = allAssets.find((a: any) => a.id === assetId)
+          if (match && match.source && match.source.kind === 'file' && match.source.dataUrl) {
+            setResolvedSrc(match.source.dataUrl)
+          }
+        }).catch((err) => {
+          console.error('[AssetNodeView] failed to load assets from localStorage', err)
+        })
+      }).catch((err) => {
+        // Ignore if module can't be loaded
+        console.warn('[AssetNodeView] LocalStorageAssetStore not available', err)
+      })
+    }
+  }, [assetId, resolvedSrc])
+
+  // Final URL used in media elements; if still null, fallback to /assets/:id (may 404)
+  const assetUrl = resolvedSrc ?? `/assets/${assetId}`
 
   return (
     <NodeViewWrapper
@@ -58,6 +86,21 @@ export const AssetNodeView: React.FC<AssetNodeViewProps> = ({
             className="w-full rounded-lg shadow-md"
             style={{ width: '100%' }}
           />
+        )}
+
+        {(type === 'pdf' || type === 'docx' || type === 'text' || type === 'markdown' || type === 'link') && (
+          <div className="block my-3 p-4 bg-stone-50 rounded-lg border border-stone-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-stone-100 flex items-center justify-center text-stone-600">📎</div>
+              <div className="flex-1">
+                <div className="font-medium text-stone-700">{title || assetId}</div>
+                <div className="text-xs text-stone-500">{type.toUpperCase()}</div>
+              </div>
+              <div>
+                <a href={assetUrl} target="_blank" rel="noreferrer" className="px-3 py-1 rounded bg-stone-200 text-stone-700 text-sm hover:bg-stone-300">Open</a>
+              </div>
+            </div>
+          </div>
         )}
 
         {selected && (

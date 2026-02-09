@@ -43,6 +43,9 @@ export const NoteView: React.FC<NoteViewProps> = ({
     if (itemType === 'asset' && assetId.startsWith('asset-')) {
       const asset = assets.find(a => a.id === assetId);
       if (asset && ['image', 'video', 'audio'].includes(asset.type)) {
+        // Prefer embedded dataUrl when available to avoid network fetches
+        const src = asset.source?.kind === 'file' ? asset.source?.dataUrl : undefined
+
         // Create an asset block (will be converted to TipTap asset node automatically)
         const newBlock = {
           id: Math.random().toString(36).substring(2, 11),
@@ -50,7 +53,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
           content: `{{asset:${assetId}}}`,
           media: {
             type: asset.type as 'image' | 'video' | 'audio',
-            src: `/assets/${assetId}`,
+            src: src || `/assets/${assetId}`,
             alt: asset.name || '',
             caption: asset.name || '',
             assetId,
@@ -97,6 +100,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
         <TipTapNoteEditor
           note={note}
           allNotes={allNotes}
+          assets={assets}
           onUpdateTitle={onUpdateTitle}
           onUpdateBlocks={onUpdateBlocks}
           onOpenNote={onOpenNote}
