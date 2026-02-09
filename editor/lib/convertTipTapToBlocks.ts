@@ -169,13 +169,22 @@ function convertNode(node: JSONContent): Block[] {
       const language = node.attrs?.language;
       const content = nodesToText(node.content);
 
-      const blockType: BlockType = language === 'table' ? 'table' : 'code';
-
-      blocks.push({
-        id: generateId(),
-        type: blockType,
-        content,
-      });
+      // Handle old table format stored as codeBlock
+      if (language === 'table') {
+        // Convert old string format to new JSON format
+        const tableData = convertLegacyTableFormat(content);
+        blocks.push({
+          id: generateId(),
+          type: 'table',
+          content: JSON.stringify(tableData),
+        });
+      } else {
+        blocks.push({
+          id: generateId(),
+          type: 'code',
+          content,
+        });
+      }
       break;
     }
 
@@ -252,13 +261,24 @@ function convertNode(node: JSONContent): Block[] {
     }
 
     case 'table': {
-      // Tables are complex; for now, convert to a table block with content representation
-      const tableContent = nodeTableToString(node);
-      blocks.push({
-        id: generateId(),
-        type: 'table',
-        content: tableContent,
-      });
+      // Convert table to structured JSON format for proper persistence
+      const tableData = extractTableStructure(node);
+      try {
+        blocks.push({
+          id: generateId(),
+          type: 'table',
+          content: JSON.stringify(tableData),
+        });
+      } catch (err) {
+        console.error('[Table Conversion] Failed to serialize table data', err);
+        // Fallback to string representation
+        const tableContent = nodeTableToString(node);
+        blocks.push({
+          id: generateId(),
+          type: 'table',
+          content: tableContent,
+        });
+      }
       break;
     }
 
@@ -360,8 +380,47 @@ function extractMentions(nodes: JSONContent[] | undefined): NoteMention[] {
 }
 
 /**
- * Convert TipTap table node to a string representation.
- * (Simple implementation; can be enhanced for full fidelity.)
+ * Extract table structure from TipTap table node into a JSON format.
+ */
+function extractTableStructure(tableNode: JSONContent): any {
+  const rows: any[] = [];
+  let headerRowIndex = -1;
+
+  if (tableNode.content) {
+    for (let rowIdx = 0; rowIdx < tableNode.content.length; rowIdx++) {
+      const row = tableNode.content[rowIdx];
+      if (row.type === 'tableRow' && row.content) {
+        const cells: string[] = [];
+        let isHeaderRow = false;
+
+        for (const cell of row.content) {
+          if (cell.type === 'tableCell' || cell.type === 'tableHeader') {
+            if (cell.type === 'tableHeader') {
+              isHeaderRow = true;
+            }
+            const cellText = nodesToText(cell.content);
+            cells.push(cellText);
+          }
+        }
+
+        if (isHeaderRow && headerRowIndex === -1) {
+          headerRowIndex = rowIdx;
+        }
+
+        rows.push({ cells });
+      }
+    }
+  }
+
+  return {
+    rows,
+    headerRowIndex: headerRowIndex !== -1 ? headerRowIndex : 0,
+  };
+}
+
+/**
+ * Convert TipTap table node to a string representation (legacy format).
+ * Used for fallback/older data compatibility.
  */
 function nodeTableToString(tableNode: JSONContent): string {
   const rows: string[] = [];
@@ -382,4 +441,23 @@ function nodeTableToString(tableNode: JSONContent): string {
   }
 
   return rows.join('\n');
+}
+
+/**
+ * Convert legacy string-based table format to new JSON format.
+ * Legacy format: "cell1 | cell2 | cell3\nrow1 | row2 | row3\n..."
+ */
+function convertLegacyTableFormat(tableString: string): any {
+  const lines = tableString.trim().split('\n');
+  const rows: any[] = [];
+
+  lines.forEach((line) => {
+    const cells = line.split('|').map((cell) => cell.trim());
+    rows.push({ cells });
+  });
+
+  return {
+    rows,
+    headerRowIndex: 0, // First row is assumed to be header
+  };
 }

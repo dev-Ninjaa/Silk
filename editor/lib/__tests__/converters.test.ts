@@ -441,7 +441,13 @@ describe('Block ↔ TipTap Converters', () => {
         {
           id: 'block-1',
           type: 'table',
-          content: 'Table data stored as string',
+          content: JSON.stringify({
+            rows: [
+              { cells: ['Header 1', 'Header 2'] },
+              { cells: ['Cell 1', 'Cell 2'] },
+            ],
+            headerRowIndex: 0,
+          }),
         },
       ];
 

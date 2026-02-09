@@ -133,13 +133,21 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
       }
 
       case 'table': {
-        // For now, store table as a code block with table marker
-        // A full table implementation would parse block.content as structured table data
-        content.push({
-          type: 'codeBlock',
-          attrs: { language: 'table' },
-          content: [{ type: 'text', text: block.content }],
-        });
+        // Parse table structure from JSON
+        try {
+          const tableData = JSON.parse(block.content);
+          const tableNode = buildTableNode(tableData);
+          if (tableNode) {
+            content.push(tableNode);
+          }
+        } catch (err) {
+          // Fallback for legacy string-based table format
+          console.warn('[Table Conversion] Failed to parse table JSON, falling back to text', err);
+          content.push({
+            type: 'paragraph',
+            content: parseBlockContent(block.content, block.mentions),
+          });
+        }
         break;
       }
 
@@ -278,4 +286,42 @@ function getLipTapListType(
   if (blockType === 'bullet-list') return 'bulletList';
   if (blockType === 'numbered-list') return 'orderedList';
   return 'taskList';
+}
+
+/**
+ * Build a proper TipTap table node from stored table data.
+ */
+function buildTableNode(tableData: any): JSONContent | null {
+  if (!tableData || !tableData.rows || tableData.rows.length === 0) {
+    return null;
+  }
+
+  const rows: JSONContent[] = [];
+
+  tableData.rows.forEach((row: any, rowIndex: number) => {
+    const cells: JSONContent[] = [];
+
+    row.cells?.forEach((cellContent: string, cellIndex: number) => {
+      const isHeader = tableData.headerRowIndex === rowIndex;
+      const cellType = isHeader ? 'tableHeader' : 'tableCell';
+
+      cells.push({
+        type: cellType,
+        content: [{
+          type: 'paragraph',
+          content: cellContent ? [{ type: 'text', text: cellContent }] : [],
+        }],
+      });
+    });
+
+    rows.push({
+      type: 'tableRow',
+      content: cells,
+    });
+  });
+
+  return {
+    type: 'table',
+    content: rows,
+  };
 }
