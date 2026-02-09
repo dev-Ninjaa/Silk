@@ -31,16 +31,16 @@ export function ImageNodeFloating({
 
   return (
     <>
-      <ImageAlignButton align="left" />
-      <ImageAlignButton align="center" />
-      <ImageAlignButton align="right" />
+      <ImageAlignButton align="left" editor={editor} />
+      <ImageAlignButton align="center" editor={editor} />
+      <ImageAlignButton align="right" editor={editor} />
       <Separator />
-      <ImageCaptionButton />
+      <ImageCaptionButton editor={editor} />
       <Separator />
-      <ImageDownloadButton />
-      <ImageUploadButton icon={RefreshCcwIcon} tooltip="Replace" />
+      <ImageDownloadButton editor={editor}/>
+      <ImageUploadButton icon={RefreshCcwIcon} tooltip="Replace" editor={editor} />
       <Separator />
-      <DeleteNodeButton />
+      <DeleteNodeButton editor={editor}/>
     </>
   )
 }

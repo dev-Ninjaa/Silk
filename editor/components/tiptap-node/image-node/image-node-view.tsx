@@ -23,6 +23,7 @@ export interface ResizableImageProps extends React.HTMLAttributes<HTMLDivElement
   initialWidth?: number
   showCaption?: boolean
   hasContent?: boolean
+  selected?: boolean
   onImageResize?: (width?: number) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdateAttributes?: (attrs: Record<string, any>) => void
@@ -31,7 +32,7 @@ export interface ResizableImageProps extends React.HTMLAttributes<HTMLDivElement
 }
 
 export function ImageNodeView(props: NodeViewProps) {
-  const { editor, node, updateAttributes, getPos } = props
+  const { editor, node, updateAttributes, getPos, selected } = props
   const hasContent = node.content.size > 0
 
   return (
@@ -43,6 +44,7 @@ export function ImageNodeView(props: NodeViewProps) {
       initialWidth={node.attrs.width}
       showCaption={node.attrs.showCaption}
       hasContent={hasContent}
+      selected={selected}
       nodeSize={node.nodeSize}
       onImageResize={(width) => updateAttributes({ width })}
       onUpdateAttributes={updateAttributes}
@@ -61,6 +63,7 @@ export const ResizableImage: React.FC<ResizableImageProps> = ({
   initialWidth,
   showCaption = false,
   hasContent = false,
+  selected = false,
   nodeSize,
   onImageResize,
   onUpdateAttributes,
@@ -101,6 +104,15 @@ export const ResizableImage: React.FC<ResizableImageProps> = ({
       editor.off("selectionUpdate", handleSelectionUpdate)
     }
   }, [editor, showCaption, hasContent, getPos, nodeSize, onUpdateAttributes])
+
+  // Show resize handles when image is selected
+  useEffect(() => {
+    if (selected && editor?.isEditable && isMountedRef.current) {
+      setShowHandles(true)
+    } else if (!selected) {
+      setShowHandles(false)
+    }
+  }, [selected, editor?.isEditable])
 
   // Had to manually set the node selection on image click because
   // We treat the image-node-extension.ts as content: "inline*"
@@ -258,7 +270,8 @@ export const ResizableImage: React.FC<ResizableImageProps> = ({
     )
       return
 
-    if (editor?.isEditable) setShowHandles(false)
+    // Don't hide handles if image is selected
+    if (editor?.isEditable && !selected) setShowHandles(false)
   }
 
   const wrapperTouchStartHandler = () => {

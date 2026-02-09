@@ -8,6 +8,9 @@ import { useTiptapEditor } from "@/editor/hooks/use-tiptap-editor"
 import { useIsBreakpoint } from "@/editor/hooks/use-is-breakpoint"
 import { useFloatingToolbarVisibility } from "@/editor/hooks/use-floating-toolbar-visibility"
 
+// --- Node ---
+import { ImageNodeFloating } from "@/components/tiptap-node/image-node/image-node-floating"
+
 // --- Icons ---
 import { MoreVerticalIcon } from "@/editor/components/tiptap-icons/more-vertical-icon"
 
@@ -65,6 +68,10 @@ export function FloatingToolbar({ editor: providedEditor }: { editor?: Editor | 
         </ToolbarGroup>
 
         <ToolbarSeparator />
+
+        <ToolbarGroup>
+          <ImageNodeFloating editor={editor} />
+        </ToolbarGroup>
 
         <ToolbarGroup>
           <LinkPopover

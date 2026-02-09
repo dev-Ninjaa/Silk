@@ -18,11 +18,13 @@ import { Placeholder } from "@tiptap/extension-placeholder"
 import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji"
 
 // --- Custom Extensions ---
-import ImageExtension from "@/editor/extensions/image-extension"
 import SlashSuggestion from "@/editor/extensions/slash-suggestion"
 import { createMentionSuggestion } from "@/editor/extensions/mention-suggestion"
 import { AssetNode } from "@/editor/extensions/asset-node"
 import { TodoNode } from "@/editor/extensions/todo-node"
+
+// --- Enhanced Image Node ---
+import { Image } from "@/components/tiptap-node/image-node/image-node-extension"
 
 // --- Enhanced Table Components ---
 import { TableKit } from "@/editor/components/tiptap-node/table-node/extensions/table-node-extension"
@@ -53,6 +55,9 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 import { FloatingToolbar } from "@/editor/ui/FloatingToolbar"
 import { EmojiDropdownMenu } from "@/editor/components/tiptap-ui/emoji-dropdown-menu"
 
+// --- Hyperlink Components ---
+import { HyperlinkHoverPopover, LinkEditDialog, HyperlinkEventHandler, HyperlinkProvider } from "@/components/tiptap-ui/hyperlink"
+
 // --- Types ---
 import { Note, Block } from "@/editor/schema/types"
 import { handleImageUpload, MAX_FILE_SIZE } from "@/editor/lib/tiptap-utils"
@@ -79,6 +84,7 @@ interface TipTapNoteEditorProps {
 export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateBlocks, onOpenNote }: TipTapNoteEditorProps) {
   const editorRef = useRef<any>(null)
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [isLinkEditOpen, setIsLinkEditOpen] = useState(false)
 
   // Keep a ref to allNotes so the extension can access the latest list without re-initialization
   const allNotesRef = useRef(allNotes)
@@ -132,7 +138,7 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
       Placeholder.configure({
         placeholder: "Write or type '/' for commands...",
       }),
-      ImageExtension,           // ✅ Image extension with resize
+      Image,                     // ✅ Enhanced image node with advanced features
       TableKit.configure({     // ✅ Enhanced table extension with drag handles and context menu
         table: {
           resizable: true,
@@ -198,10 +204,20 @@ export function TipTapNoteEditor({ note, allNotes = [], onUpdateTitle, onUpdateB
 
   return (
     <div className="tiptap-note-editor-wrapper">
-      <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
-      <FloatingToolbar editor={editor} />
-      <EmojiDropdownMenu editor={editor} />
-      {editor && <TableHandle editor={editor} />}
+      <HyperlinkProvider>
+        <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+        <FloatingToolbar editor={editor} />
+        <EmojiDropdownMenu editor={editor} />
+        {editor && <TableHandle editor={editor} />}
+
+        <HyperlinkEventHandler />
+        <HyperlinkHoverPopover onEdit={() => setIsLinkEditOpen(true)} />
+        <LinkEditDialog
+          editor={editor}
+          isOpen={isLinkEditOpen}
+          onClose={() => setIsLinkEditOpen(false)}
+        />
+      </HyperlinkProvider>
     </div>
   )
 }
