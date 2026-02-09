@@ -149,8 +149,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({ position, onSelect, onClos
         className="flex flex-col divide-y divide-gray-100 overflow-y-auto" 
         style={{ 
           scrollbarWidth: 'none', 
-          msOverflowStyle: 'none',
-          WebkitScrollbar: { display: 'none' } as any
+          msOverflowStyle: 'none'
         }}
       >
         {Object.keys(grouped).map((section) => (

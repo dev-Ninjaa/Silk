@@ -15,7 +15,7 @@ import { TableRowIcon } from "@/editor/components/tiptap-icons/table-row-icon"
 import "./table-grid-selector.scss"
 
 // --- Types ---
-export interface CellCoordinates {
+interface CellCoordinates {
   row: number
   col: number
 }

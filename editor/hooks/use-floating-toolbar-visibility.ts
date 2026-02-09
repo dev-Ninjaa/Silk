@@ -5,6 +5,19 @@ import { useEffect, useRef, useState } from "react"
 export const HIDE_FLOATING_META = "hideFloatingToolbar"
 
 /**
+ * Selects a node and marks the transaction to keep floating toolbars hidden
+ * until the next explicit selection change.
+ */
+export function selectNodeAndHideFloating(editor: Editor, pos: number) {
+  const { state, view } = editor
+  const nodeSelection = NodeSelection.create(state.doc, pos)
+  const transaction = state.tr
+    .setSelection(nodeSelection)
+    .setMeta(HIDE_FLOATING_META, true)
+  view.dispatch(transaction)
+}
+
+/**
  * Centralizes all logic about when the floating toolbar should be hidden/shown.
  */
 export function useFloatingToolbarVisibility(params: {

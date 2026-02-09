@@ -208,5 +208,3 @@ export const TableCellHandleMenu = forwardRef<
 })
 
 TableCellHandleMenu.displayName = "TableCellHandleMenu"
-
-export { TableActionMenu }
