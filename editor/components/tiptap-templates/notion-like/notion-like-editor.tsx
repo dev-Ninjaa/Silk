@@ -25,6 +25,7 @@ import { UniqueID } from "@tiptap/extension-unique-id"
 import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji"
 import { getVideoExtension, VideoNode } from "@/editor/components/tiptap-node/video-node"
 import { VideoUploadNodeExtension } from "@/components/tiptap-node/video-upload-node"
+import { AudioUploadNodeExtension } from "@/components/tiptap-node/audio-upload-node"
 import {
   getHierarchicalIndexes,
   TableOfContents,
@@ -316,6 +317,7 @@ export function EditorProvider(props: EditorProviderProps) {
       VideoNode,
       getVideoExtension(),
       VideoUploadNodeExtension,
+      AudioUploadNodeExtension,
     ],
   })
 
