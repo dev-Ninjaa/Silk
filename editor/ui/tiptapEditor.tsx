@@ -35,6 +35,10 @@ import { AudioUploadNodeExtension } from "@/components/tiptap-node/audio-upload-
 import { TableKit } from "@/editor/components/tiptap-node/table-node/extensions/table-node-extension"
 import { TableHandleExtension } from "@/editor/components/tiptap-node/table-node/extensions/table-handle"
 import { TableHandle } from "@/editor/components/tiptap-node/table-node/ui/table-handle"
+import { TableSelectionOverlay } from "@/editor/components/tiptap-node/table-node/ui/table-selection-overlay"
+import { TableCellHandleMenu } from "@/editor/components/tiptap-node/table-node/ui/table-cell-handle-menu"
+import { TableExtendRowColumnButtons } from "@/editor/components/tiptap-node/table-node/ui/table-extend-row-column-button"
+import "@/components/tiptap-node/table-node/styles/prosemirror-table.scss"
 
 // --- Converters ---
 import { convertBlocksToTipTap } from "@/editor/lib/convertBlocksToTipTap"
@@ -287,6 +291,16 @@ export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTit
         <FloatingToolbar editor={editor} />
         <EmojiDropdownMenu editor={editor} />
         {editor && <TableHandle editor={editor} />}
+        <TableExtendRowColumnButtons />
+        <TableSelectionOverlay
+          showResizeHandles={true}
+          cellMenu={(props) => (
+            <TableCellHandleMenu
+              editor={props.editor}
+              onMouseDown={(e) => props.onResizeStart?.("br")(e)}
+            />
+          )}
+        />
 
         <HyperlinkEventHandler />
         <HyperlinkHoverPopover onEdit={() => setIsLinkEditOpen(true)} />
