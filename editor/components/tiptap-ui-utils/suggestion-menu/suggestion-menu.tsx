@@ -52,6 +52,7 @@ export const SuggestionMenu = ({
   // )
   const [internalDecorationNode, setInternalDecorationNode] =
     useState<HTMLElement | null>(null)
+  const [internalClientRect, setInternalClientRect] = useState<DOMRect | null>(null)
   const [internalCommand, setInternalCommand] = useState<
     ((item: SuggestionItem) => void) | null
   >(null)
@@ -59,14 +60,17 @@ export const SuggestionMenu = ({
   const [internalQuery, setInternalQuery] = useState<string>("")
   const [, setInternalRange] = useState<Range | null>(null)
 
+  // Choose reference: prefer client rect (caret pos) when available, otherwise fallback to decoration node
+  const floatingReference = internalClientRect || internalDecorationNode
+
   const { ref, style, getFloatingProps, isMounted } = useFloatingElement(
     show,
-    internalDecorationNode,
+    floatingReference,
     1000,
     {
       placement: "bottom-start",
       middleware: [
-        offset(10),
+        offset(6), // smaller offset to keep popup near trigger
         flip({
           mainAxis: true,
           crossAxis: false,
@@ -189,26 +193,51 @@ export const SuggestionMenu = ({
       render: () => {
         return {
           onStart: (props: SuggestionProps<SuggestionItem>) => {
-            setInternalDecorationNode(
-              (props.decorationNode as HTMLElement) ?? null
-            )
+            const dec = (props.decorationNode as HTMLElement) ?? null
+            setInternalDecorationNode(dec)
             setInternalCommand(() => props.command)
             setInternalItems(props.items)
             setInternalQuery(props.query)
             setInternalRange(props.range)
-            // setInternalClientRect(props.clientRect?.() ?? null)
+            // If clientRect is available (caret position), prefer it for floating reference
+            setInternalClientRect(props.clientRect?.() ?? null)
+
+            // Ensure decoration shows our configured content and empty state
+            try {
+              const decoContent = (internalSuggestionPropsRef.current as any)?.decorationContent ?? ""
+              if (dec) {
+                if (decoContent) dec.setAttribute('data-decoration-content', decoContent)
+                if (!props.query) dec.classList.add('is-empty')
+                else dec.classList.remove('is-empty')
+              }
+            } catch (err) {
+              // ignore
+            }
+
             setShow(true)
           },
 
           onUpdate: (props: SuggestionProps<SuggestionItem>) => {
-            setInternalDecorationNode(
-              (props.decorationNode as HTMLElement) ?? null
-            )
+            const dec = (props.decorationNode as HTMLElement) ?? null
+            setInternalDecorationNode(dec)
             setInternalCommand(() => props.command)
             setInternalItems(props.items)
             setInternalQuery(props.query)
             setInternalRange(props.range)
-            // setInternalClientRect(props.clientRect?.() ?? null)
+            // If clientRect is available (caret position), prefer it for floating reference
+            setInternalClientRect(props.clientRect?.() ?? null)
+
+            // Keep decoration attributes in sync with query
+            try {
+              const decoContent = (internalSuggestionPropsRef.current as any)?.decorationContent ?? ""
+              if (dec) {
+                if (decoContent) dec.setAttribute('data-decoration-content', decoContent)
+                if (!props.query) dec.classList.add('is-empty')
+                else dec.classList.remove('is-empty')
+              }
+            } catch (err) {
+              // ignore
+            }
           },
 
           onKeyDown: (props: SuggestionKeyDownProps) => {
@@ -220,6 +249,16 @@ export const SuggestionMenu = ({
           },
 
           onExit: () => {
+            const dec = internalDecorationNode
+            if (dec) {
+              try {
+                dec.removeAttribute('data-decoration-content')
+                dec.classList.remove('is-empty')
+              } catch (err) {
+                // ignore
+              }
+            }
+
             setInternalDecorationNode(null)
             setInternalCommand(null)
             setInternalItems([])
