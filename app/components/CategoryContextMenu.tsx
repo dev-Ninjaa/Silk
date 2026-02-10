@@ -10,6 +10,7 @@ interface CategoryContextMenuProps {
   onEdit: () => void;
   onClose: () => void;
   canDelete: boolean;
+  isDefault?: boolean;
 }
 
 export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
@@ -18,7 +19,8 @@ export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
   onDelete,
   onEdit,
   onClose,
-  canDelete
+  canDelete,
+  isDefault = false
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -55,34 +57,43 @@ export const CategoryContextMenu: React.FC<CategoryContextMenuProps> = ({
       className="fixed z-50 bg-white rounded-lg shadow-lg border border-stone-200 py-1 min-w-[160px]"
       style={{ left: x, top: y }}
     >
-      <button
-        onClick={() => {
-          onEdit();
-          onClose();
-        }}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-100 cursor-pointer"
-      >
-        <Edit3 size={14} />
-        <span>Edit Category</span>
-      </button>
-      <button
-        onClick={() => {
-          if (canDelete) {
-            onDelete();
+      {!isDefault && (
+        <button
+          onClick={() => {
+            onEdit();
             onClose();
-          }
-        }}
-        disabled={!canDelete}
-        className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
-          canDelete 
-            ? 'text-red-600 hover:bg-red-50 cursor-pointer' 
-            : 'text-stone-400 cursor-not-allowed'
-        }`}
-        title={!canDelete ? 'Delete all notes in this category first' : ''}
-      >
-        <Trash2 size={14} />
-        <span>Delete Category</span>
-      </button>
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-700 hover:bg-stone-100 cursor-pointer"
+        >
+          <Edit3 size={14} />
+          <span>Edit Category</span>
+        </button>
+      )}
+      {!isDefault && (
+        <button
+          onClick={() => {
+            if (canDelete) {
+              onDelete();
+              onClose();
+            }
+          }}
+          disabled={!canDelete}
+          className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${
+            canDelete 
+              ? 'text-red-600 hover:bg-red-50 cursor-pointer' 
+              : 'text-stone-400 cursor-not-allowed'
+          }`}
+          title={!canDelete ? 'Delete all notes in this category first' : ''}
+        >
+          <Trash2 size={14} />
+          <span>Delete Category</span>
+        </button>
+      )}
+      {isDefault && (
+        <div className="px-3 py-2 text-xs text-stone-500 text-center">
+          Default category cannot be edited or deleted
+        </div>
+      )}
     </div>
   );
 };

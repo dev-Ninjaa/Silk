@@ -872,6 +872,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           x={noteContextMenu.x}
           y={noteContextMenu.y}
           isPinned={notes.find(n => n.id === noteContextMenu.noteId)?.isPinned}
+          isInDefaultCategory={(() => {
+            const note = notes.find(n => n.id === noteContextMenu.noteId);
+            if (!note) return false;
+            const category = categories.find(c => c.id === note.categoryId);
+            return category?.isDefault || false;
+          })()}
           onOpen={() => {
             onSelectNote(noteContextMenu.noteId);
             setNoteContextMenu(null);
@@ -893,6 +899,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           x={categoryContextMenu.x}
           y={categoryContextMenu.y}
           canDelete={canDeleteCategory(categoryContextMenu.categoryId)}
+          isDefault={categories.find(c => c.id === categoryContextMenu.categoryId)?.isDefault}
           onEdit={() => handleOpenCategoryEditModal(categoryContextMenu.categoryId)}
           onDelete={() => {
             onDeleteCategory(categoryContextMenu.categoryId);
@@ -920,6 +927,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <AssetContextMenu
           x={assetContextMenu.x}
           y={assetContextMenu.y}
+          isInDefaultCategory={(() => {
+            const asset = assets.find(a => a.id === assetContextMenu.assetId);
+            if (!asset) return false;
+            const category = categories.find(c => c.id === asset.categoryId);
+            return category?.isDefault || false;
+          })()}
           onOpen={() => {
             onOpenAsset(assetContextMenu.assetId);
             setAssetContextMenu(null);

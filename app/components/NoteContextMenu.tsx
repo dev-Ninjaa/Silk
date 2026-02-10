@@ -7,6 +7,7 @@ interface NoteContextMenuProps {
   x: number;
   y: number;
   isPinned?: boolean;
+  isInDefaultCategory?: boolean;
   onOpen: () => void;
   onDelete: () => void;
   onTogglePin?: () => void;
@@ -17,6 +18,7 @@ export const NoteContextMenu: React.FC<NoteContextMenuProps> = ({
   x,
   y,
   isPinned = false,
+  isInDefaultCategory = false,
   onOpen,
   onDelete,
   onTogglePin,
@@ -79,16 +81,23 @@ export const NoteContextMenu: React.FC<NoteContextMenuProps> = ({
           <span>{isPinned ? 'Unpin' : 'Pin'}</span>
         </button>
       )}
-      <button
-        onClick={() => {
-          onDelete();
-          onClose();
-        }}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-      >
-        <Trash2 size={14} />
-        <span>Delete</span>
-      </button>
+      {!isInDefaultCategory && (
+        <button
+          onClick={() => {
+            onDelete();
+            onClose();
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+        >
+          <Trash2 size={14} />
+          <span>Delete</span>
+        </button>
+      )}
+      {isInDefaultCategory && (
+        <div className="px-3 py-2 text-xs text-stone-500 text-center border-t border-stone-100">
+          Notes in default category cannot be deleted
+        </div>
+      )}
     </div>
   );
 };
