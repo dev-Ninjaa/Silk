@@ -1,0 +1,26 @@
+.audio-upload-dialog {
+  width: 300px;
+  background: #f4f5f7; /* light gray */
+  border-radius: 8px;
+  padding: 12px;
+  color: #111;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.audio-upload-tabs { display:flex; gap:8px; margin-bottom:10px }
+.audio-tab { background: transparent; border: none; padding: 6px 10px; color: #6b6b6b; border-radius: 6px; cursor: pointer; font-size: 13px }
+.audio-tab.active { background: #fff; color: #111; box-shadow: 0 1px 0 rgba(0,0,0,0.03) }
+
+.audio-upload-body { display:flex; align-items:center; justify-content:center; padding:12px 0 }
+
+.choose-file-button { background: #2b8bf5; color: #fff; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600 }
+.choose-file-button:disabled { opacity: 0.6 }
+
+.dialog-close { position:absolute; right:8px; top:6px; background:transparent; border:none; color:#666; font-size:14px; cursor:pointer }
+
+.audio-embed-input { width:100%; padding:8px; border-radius:6px; border: 1px solid #e6e6e6; background: #fff; color:#111 }
+
+.audio-embed-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px }
+.cancel-button { background: transparent; border: 1px solid #e6e6e6; padding: 8px 12px; border-radius: 6px; color: #111 }
+.embed-button { background: #2b8bf5; color: #fff; padding: 8px 12px; border-radius:6px; border:none }
