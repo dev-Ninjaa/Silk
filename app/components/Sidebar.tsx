@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Category, SubCategory, Note, ViewMode, Asset } from '@/app/types';
 import { FileText, Plus, FolderPlus, Home, Clock, Pin, Library, Settings, Trash2, Search, Folder, BookOpen, Briefcase, Heart, Star, Lightbulb, Coffee, Music, MessageSquare, File, Link as LinkIcon, Image, FileCode, ChevronLeft, ChevronRight, FileVideo, FileAudio, FileArchive, ChevronDown } from 'lucide-react';
 import { NoteContextMenu } from './NoteContextMenu';
@@ -80,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingSubCategoryId, setEditingSubCategoryId] = useState<string | null>(null);
   const [selectedCategoryForSubCategory, setSelectedCategoryForSubCategory] = useState<string | null>(null);
   const [isHoveringSettings, setIsHoveringSettings] = useState(false);
+  const settingsOverlayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<{ type: 'category' | 'subcategory', id: string } | null>(null);
   const [noteContextMenu, setNoteContextMenu] = useState<{
     x: number;
@@ -101,6 +102,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
     y: number;
     assetId: string;
   } | null>(null);
+
+  const clearSettingsOverlayTimer = () => {
+    if (settingsOverlayTimeoutRef.current) {
+      clearTimeout(settingsOverlayTimeoutRef.current);
+      settingsOverlayTimeoutRef.current = null;
+    }
+  };
+
+  const startSettingsOverlayTimer = () => {
+    clearSettingsOverlayTimer();
+    settingsOverlayTimeoutRef.current = setTimeout(() => {
+      setIsHoveringSettings(false);
+      settingsOverlayTimeoutRef.current = null;
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearSettingsOverlayTimer();
+    };
+  }, []);
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -492,7 +514,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`h-screen bg-[#DFEBF6] flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-60 sm:w-64' : 'w-16 sm:w-20'}`}>
+    <div className={`relative h-screen bg-[#DFEBF6] flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-60 sm:w-64' : 'w-16 sm:w-20'}`}>
       {/* Header with toggle button */}
       <div className="flex items-center justify-between p-4">
         {sidebarOpen && <h2 className="text-lg font-bold text-stone-900">Pulm</h2>}
@@ -545,7 +567,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Library Content */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-0.5">
+      <div className="flex-1 overflow-y-auto scrollbar-none px-3 pb-16 space-y-0.5">
         {sidebarOpen && (
           <div className="mb-2 px-1">
             <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">Library</h3>
@@ -786,83 +808,115 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom Section with Settings and More */}
-      <div className={`mt-auto p-3 space-y-1 flex flex-col ${!sidebarOpen && 'items-center'} group/bottom`}>
-        {!sidebarOpen && (
-          <div className="space-y-1 w-full opacity-0 group-hover/bottom:opacity-100 transition-opacity">
-            {(['search', 'bin'] as ViewMode[]).map((mode) => {
-              const Icon = getViewModeIcon(mode);
-              return (
-                <div key={mode} className="group relative">
-                  <button
-                    onClick={() => onChangeView(mode)}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-fit text-sm font-medium ${viewMode === mode
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-stone-600 hover:bg-white/50'
-                      } p-3 justify-center`}
-                    title={getViewModeLabel(mode)}
-                  >
-                    <Icon size={18} className="flex-shrink-0" />
-                  </button>
-                  <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-                    {getViewModeLabel(mode)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {sidebarOpen && (
-          <div className="space-y-1 opacity-0 group-hover/bottom:opacity-100 transition-opacity">
-            <button
-              onClick={() => onChangeView('search')}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${viewMode === 'search'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-stone-600 hover:bg-white/50'
-                }`}
+      <div className={`absolute bottom-0 left-0 right-0 p-3 z-20 bg-[#DFEBF6] ${!sidebarOpen && 'flex justify-center'}`}>
+        <div
+          className={`relative ${sidebarOpen ? 'w-full' : 'w-fit'}`}
+          onMouseEnter={() => {
+            setIsHoveringSettings(true);
+            startSettingsOverlayTimer();
+          }}
+        >
+          {sidebarOpen && (
+            <div
+              className={`absolute left-0 right-0 bottom-full mb-1 rounded-xl bg-[#DFEBF6] p-1 shadow-md ${isHoveringSettings ? 'block pointer-events-auto' : 'hidden pointer-events-none'}`}
+              onMouseEnter={() => clearSettingsOverlayTimer()}
+              onMouseLeave={() => {
+                clearSettingsOverlayTimer();
+                setIsHoveringSettings(false);
+              }}
             >
-              <Search size={18} className="flex-shrink-0" />
-              <span>Search</span>
-            </button>
-
-            <button
-              onClick={() => onChangeView('bin')}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${viewMode === 'bin'
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-stone-600 hover:bg-white/50'
-                }`}
-            >
-              <Trash2 size={18} className="flex-shrink-0" />
-              <span>Bin</span>
-            </button>
-
-            <button
-              onClick={onOpenFeedback}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium text-stone-600 hover:bg-white/50"
-            >
-              <MessageSquare size={18} className="flex-shrink-0" />
-              <span>Feedback</span>
-            </button>
-          </div>
-        )}
-
-        <div className="group relative">
-          <button
-            onClick={() => onChangeView('settings')}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${sidebarOpen ? 'w-full' : 'w-fit p-3 justify-center'} ${viewMode === 'settings'
-              ? 'bg-blue-100 text-blue-700'
-              : 'text-stone-600 hover:bg-white/50'
-              }`}
-            title={sidebarOpen ? undefined : 'Settings'}
-          >
-            <Settings size={18} className="flex-shrink-0" />
-            {sidebarOpen && <span>Settings</span>}
-          </button>
-          {!sidebarOpen && (
-            <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-              Settings
+              <button
+                onClick={() => onChangeView('search')}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${viewMode === 'search'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-stone-600 hover:bg-white/50'
+                  }`}
+              >
+                <Search size={18} className="flex-shrink-0" />
+                <span>Search</span>
+              </button>
+              <button
+                onClick={() => onChangeView('bin')}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium ${viewMode === 'bin'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-stone-600 hover:bg-white/50'
+                  }`}
+              >
+                <Trash2 size={18} className="flex-shrink-0" />
+                <span>Bin</span>
+              </button>
+              <button
+                onClick={onOpenFeedback}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-sm font-medium text-stone-600 hover:bg-white/50"
+              >
+                <MessageSquare size={18} className="flex-shrink-0" />
+                <span>Feedback</span>
+              </button>
             </div>
           )}
+
+          {!sidebarOpen && (
+            <div
+              className={`absolute bottom-full mb-1 right-0 space-y-1 rounded-xl bg-[#DFEBF6] p-1 shadow-md ${isHoveringSettings ? 'block pointer-events-auto' : 'hidden pointer-events-none'}`}
+              onMouseEnter={() => clearSettingsOverlayTimer()}
+              onMouseLeave={() => {
+                clearSettingsOverlayTimer();
+                setIsHoveringSettings(false);
+              }}
+            >
+              {(['search', 'bin'] as ViewMode[]).map((mode) => {
+                const Icon = getViewModeIcon(mode);
+                return (
+                  <div key={mode} className="group relative">
+                    <button
+                      onClick={() => onChangeView(mode)}
+                      className={`flex items-center gap-3 rounded-lg transition-colors w-fit text-sm font-medium p-3 justify-center ${viewMode === mode
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-stone-600 hover:bg-white/50'
+                        }`}
+                      title={getViewModeLabel(mode)}
+                    >
+                      <Icon size={18} className="flex-shrink-0" />
+                    </button>
+                    <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                      {getViewModeLabel(mode)}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="group relative">
+                <button
+                  onClick={onOpenFeedback}
+                  className="flex items-center gap-3 rounded-lg transition-colors w-fit text-sm font-medium p-3 justify-center text-stone-600 hover:bg-white/50"
+                  title="Feedback"
+                >
+                  <MessageSquare size={18} className="flex-shrink-0" />
+                </button>
+                <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                  Feedback
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="group relative">
+            <button
+              onClick={() => onChangeView('settings')}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg bg-[#DFEBF6] transition-colors text-sm font-medium ${sidebarOpen ? 'w-full' : 'w-fit p-3 justify-center'} ${viewMode === 'settings'
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-stone-600 hover:bg-white/50'
+                }`}
+              title={sidebarOpen ? undefined : 'Settings'}
+            >
+              <Settings size={18} className="flex-shrink-0" />
+              {sidebarOpen && <span>Settings</span>}
+            </button>
+            {!sidebarOpen && (
+              <div className="absolute left-20 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                Settings
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
