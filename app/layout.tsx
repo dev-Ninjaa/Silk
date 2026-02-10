@@ -16,18 +16,14 @@ export default function RootLayout({
       <head>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>{`
-          ::-webkit-scrollbar {
-            width: 8px;
+          * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
           }
-          ::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          ::-webkit-scrollbar-thumb {
-            background: #e5e7eb;
-            border-radius: 4px;
-          }
-          ::-webkit-scrollbar-thumb:hover {
-            background: #d1d5db;
+          *::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
           }
           
           [contenteditable]:focus {
