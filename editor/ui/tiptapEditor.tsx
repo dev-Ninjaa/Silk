@@ -18,7 +18,8 @@ import { Placeholder } from "@tiptap/extension-placeholder"
 import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji"
 
 // --- Custom Extensions ---
-import SlashSuggestion from "@/editor/extensions/slash-suggestion"
+// Old custom slash suggestion removed in favor of Notion-style SlashDropdownMenu
+import { SlashMenu } from "@/editor/ui/SlashMenu"
 import { createMentionSuggestion } from "@/editor/extensions/mention-suggestion"
 import { AssetNode } from "@/editor/extensions/asset-node"
 import { TodoNode } from "@/editor/extensions/todo-node"
@@ -237,7 +238,7 @@ export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTit
         onError: (error) => console.error("Upload failed:", error),
       }),
       UiState,
-      SlashSuggestion,               // ✅ Slash suggestions (/)
+      // Using Notion-style SlashDropdownMenu instead of the older SlashSuggestion extension
       createMentionSuggestion(() => {
         // Dynamic getter: returns all notes excluding the current one and deleted notes
         return (allNotesRef.current || []).filter(n => n.id !== noteIdRef.current && !n.isDeleted)
@@ -287,6 +288,8 @@ export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTit
           }}
         >
           <DragContextMenu />
+          {/* Mount the SlashMenu (authoritative menu) so it registers the Suggestion plugin */}
+          <SlashMenu editor={editor} />
         </EditorContent>
         <FloatingToolbar editor={editor} />
         <EmojiDropdownMenu editor={editor} />

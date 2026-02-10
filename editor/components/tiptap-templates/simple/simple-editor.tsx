@@ -20,6 +20,7 @@ import { Placeholder } from "@tiptap/extension-placeholder"
 import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji"
 import { getVideoExtension, VideoNode } from "@/editor/components/tiptap-node/video-node"
 import { VideoUploadNodeExtension } from "@/components/tiptap-node/video-upload-node"
+import { AudioUploadNodeExtension } from "@/components/tiptap-node/audio-upload-node"
 
 
 // --- UI Primitives ---
@@ -82,8 +83,8 @@ import { useUiEditorState } from "@/editor/hooks/use-ui-editor-state"
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
 import { FloatingToolbar } from "@/editor/ui/FloatingToolbar"
 import { EmojiDropdownMenu } from "@/editor/components/tiptap-ui/emoji-dropdown-menu"
-import SlashSuggestion from "@/editor/extensions/slash-suggestion"
 import MentionSuggestion from "@/editor/extensions/mention-suggestion"
+import { SlashMenu } from "@/editor/ui/SlashMenu"
 
 // Mention logic extracted to a standalone `mention-suggestion` extension for cleaner testing in SimpleEditor
 
@@ -266,10 +267,11 @@ export function SimpleEditor() {
       UiState,
       MentionSuggestion,
 
-      SlashSuggestion,
+      // Note: SlashSuggestion (legacy extension) removed - we mount SlashMenu component which registers the Suggestion plugin
       VideoNode,
       getVideoExtension(),
       VideoUploadNodeExtension,
+      AudioUploadNodeExtension,
     ],
     content,
   })
@@ -373,6 +375,8 @@ export function SimpleEditor() {
             <FloatingToolbar />
             <EmojiDropdownMenu />
             <DragContextMenu />
+            {/* Mount Notion-style Slash menu (uses Suggestion internally) */}
+            <SlashMenu editor={editor} />
           </EditorContent>
 
           <HyperlinkEventHandler />
