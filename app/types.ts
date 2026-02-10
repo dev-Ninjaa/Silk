@@ -78,6 +78,7 @@ export interface Category {
   name: string;
   color: string;
   icon?: string;
+  isDefault?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,6 +98,7 @@ export interface Note {
   categoryId: string;
   subCategoryId?: string;
   isPinned?: boolean;
+  isDefault?: boolean;
   lastOpenedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -112,6 +114,7 @@ export interface Asset {
   type: AssetType;
   categoryId: string;
   subCategoryId?: string;
+  isDefault?: boolean;
   source: 
     | { kind: 'file'; dataUrl: string }
     | { kind: 'link'; url: string };

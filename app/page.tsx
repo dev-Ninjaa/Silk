@@ -213,6 +213,12 @@ export default function Home() {
   };
 
   const handleUpdateCategory = (categoryId: string, name: string, color: string, icon?: string) => {
+    // Prevent editing default category
+    const category = categories.find(c => c.id === categoryId);
+    if (category?.isDefault) {
+      return;
+    }
+    
     setCategories(categories.map(c =>
       c.id === categoryId
         ? { ...c, name, color, icon, updatedAt: new Date() }
@@ -424,6 +430,15 @@ export default function Home() {
   };
 
   const handleDeleteNote = (noteId: string) => {
+    // Prevent deleting notes in default category
+    const note = notes.find(n => n.id === noteId);
+    if (note) {
+      const category = categories.find(c => c.id === note.categoryId);
+      if (category?.isDefault) {
+        return;
+      }
+    }
+    
     setNotes(notes.map(n =>
       n.id === noteId
         ? { ...n, isDeleted: true, deletedAt: new Date(), updatedAt: new Date() }
@@ -519,6 +534,12 @@ export default function Home() {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
+    // Prevent deleting default category
+    const category = categories.find(c => c.id === categoryId);
+    if (category?.isDefault) {
+      return;
+    }
+    
     // Check if category has any notes (including in sub-categories)
     const categoryNotes = notes.filter(n => n.categoryId === categoryId && !n.isDeleted);
     if (categoryNotes.length === 0) {
@@ -658,6 +679,15 @@ export default function Home() {
   };
 
   const handleDeleteAsset = (assetId: string) => {
+    // Prevent deleting assets in default category
+    const asset = assets.find(a => a.id === assetId);
+    if (asset) {
+      const category = categories.find(c => c.id === asset.categoryId);
+      if (category?.isDefault) {
+        return;
+      }
+    }
+    
     setAssets(assets.map(a =>
       a.id === assetId
         ? { ...a, isDeleted: true, deletedAt: new Date(), updatedAt: new Date() }
