@@ -233,16 +233,31 @@ export const SlashSuggestion = Extension.create({
             },
             onExit: () => {
               menuOpen = false
-              if (root) {
-                root.unmount()
-                root = null
+
+              const doCleanup = () => {
+                if (root) {
+                  try {
+                    root.unmount()
+                  } catch (err) {
+                    // swallow errors during unmount
+                    console.warn('[Slash] root.unmount error', err)
+                  }
+                  root = null
+                }
+                if (container && container.parentNode) {
+                  container.parentNode.removeChild(container)
+                  container = null
+                }
+                currentProps = null
+                handleSelect = null
               }
-              if (container && container.parentNode) {
-                container.parentNode.removeChild(container)
-                container = null
+
+              // Avoid synchronous unmount during React render - schedule cleanup after paint
+              if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(doCleanup)
+              } else {
+                setTimeout(doCleanup, 0)
               }
-              currentProps = null
-              handleSelect = null
             },
           }
         },
