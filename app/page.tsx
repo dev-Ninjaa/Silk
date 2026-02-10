@@ -522,9 +522,36 @@ export default function Home() {
     // Check if category has any notes (including in sub-categories)
     const categoryNotes = notes.filter(n => n.categoryId === categoryId && !n.isDeleted);
     if (categoryNotes.length === 0) {
+      // Find sub-categories that belong to this category
+      const subCatIdsToRemove = subCategories.filter(sc => sc.categoryId === categoryId).map(sc => sc.id);
+
+      // Remove the category and its sub-categories
       setCategories(categories.filter(c => c.id !== categoryId));
-      // Also delete sub-categories of this category
       setSubCategories(subCategories.filter(sc => sc.categoryId !== categoryId));
+
+      // Remove assets that belong to this category or its sub-categories
+      const removedAssetIds = new Set(assets.filter(a => a.categoryId === categoryId || (a.subCategoryId && subCatIdsToRemove.includes(a.subCategoryId))).map(a => a.id));
+      if (removedAssetIds.size > 0) {
+        setAssets(assets.filter(a => !removedAssetIds.has(a.id)));
+
+        // Clean up asset mentions in notes for removed assets
+        setNotes(notes.map(note => {
+          const hasAffectedMentions = note.blocks.some(block =>
+            block.assetMentions?.some(mention => removedAssetIds.has(mention.assetId))
+          );
+
+          if (!hasAffectedMentions) return note;
+
+          const updatedBlocks = note.blocks.map(block => {
+            if (!block.assetMentions || block.assetMentions.length === 0) return block;
+            const filteredMentions = block.assetMentions.filter(mention => !removedAssetIds.has(mention.assetId));
+            return { ...block, assetMentions: filteredMentions };
+          });
+
+          return { ...note, blocks: updatedBlocks, updatedAt: new Date() };
+        }));
+      }
+
       if (selectedCategoryId === categoryId) {
         setSelectedCategoryId(null);
         setSelectedSubCategoryId(null);
@@ -535,7 +562,32 @@ export default function Home() {
   const handleDeleteSubCategory = (subCategoryId: string) => {
     const subCategoryNotes = notes.filter(n => n.subCategoryId === subCategoryId && !n.isDeleted);
     if (subCategoryNotes.length === 0) {
+      // Remove the sub-category
       setSubCategories(subCategories.filter(sc => sc.id !== subCategoryId));
+
+      // Remove assets that belong to this sub-category
+      const removedAssetIds = new Set(assets.filter(a => a.subCategoryId === subCategoryId).map(a => a.id));
+      if (removedAssetIds.size > 0) {
+        setAssets(assets.filter(a => !removedAssetIds.has(a.id)));
+
+        // Clean up asset mentions in notes for removed assets
+        setNotes(notes.map(note => {
+          const hasAffectedMentions = note.blocks.some(block =>
+            block.assetMentions?.some(mention => removedAssetIds.has(mention.assetId))
+          );
+
+          if (!hasAffectedMentions) return note;
+
+          const updatedBlocks = note.blocks.map(block => {
+            if (!block.assetMentions || block.assetMentions.length === 0) return block;
+            const filteredMentions = block.assetMentions.filter(mention => !removedAssetIds.has(mention.assetId));
+            return { ...block, assetMentions: filteredMentions };
+          });
+
+          return { ...note, blocks: updatedBlocks, updatedAt: new Date() };
+        }));
+      }
+
       if (selectedSubCategoryId === subCategoryId) {
         setSelectedSubCategoryId(null);
       }
