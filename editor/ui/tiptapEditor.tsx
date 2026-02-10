@@ -29,6 +29,7 @@ import { Image } from "@/components/tiptap-node/image-node/image-node-extension"
 // --- Video Node ---
 import { getVideoExtension, VideoNode } from "@/editor/components/tiptap-node/video-node"
 import { VideoUploadNodeExtension } from "@/components/tiptap-node/video-upload-node"
+import { AudioUploadNodeExtension } from "@/components/tiptap-node/audio-upload-node"
 
 // --- Enhanced Table Components ---
 import { TableKit } from "@/editor/components/tiptap-node/table-node/extensions/table-node-extension"
@@ -240,6 +241,7 @@ export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTit
       VideoNode,                     // ✅ Custom video node
       getVideoExtension(),            // ✅ YouTube embed
       VideoUploadNodeExtension,       // ✅ Video upload node
+      AudioUploadNodeExtension,       // ✅ Audio upload node
     ],
     // Initialize with converted blocks
     content: convertBlocksToTipTap(note.blocks),

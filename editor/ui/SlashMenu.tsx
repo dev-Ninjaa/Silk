@@ -15,7 +15,8 @@ import {
   FileText,
   AtSign,
   Smile,
-  Youtube
+  Youtube,
+  Music
 } from 'lucide-react';
 import { MenuItem, BlockType, Coordinates } from '../schema/types';
 
@@ -35,6 +36,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'mention', label: 'Mention', icon: AtSign, group: 'Insert' },
   { id: 'image', label: 'Image', icon: FileText, group: 'Upload' },
   { id: 'video', label: 'Video', icon: Youtube, group: 'Upload' },
+  { id: 'audio', label: 'Audio', icon: Music, group: 'Upload' },
 ];
 
 interface SlashMenuProps {
