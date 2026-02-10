@@ -9,7 +9,8 @@ import "./video-upload-dialog.scss"
 interface VideoUploadDialogProps {
   editor: Editor
   onClose: () => void
-  onUpload?: (videoUrl: string) => void
+  /** Passes the selected File back to the caller for further handling (e.g., persistence) */
+  onUpload?: (file: File) => void
 }
 
 export function VideoUploadDialog({ editor, onClose, onUpload }: VideoUploadDialogProps) {
@@ -31,14 +32,10 @@ export function VideoUploadDialog({ editor, onClose, onUpload }: VideoUploadDial
 
     try {
       setIsProcessing(true)
-      // Create a blob URL for the video file
-      const videoUrl = URL.createObjectURL(file)
-      
-      // Call the onUpload callback if provided
+      // Provide the raw File to the caller for persistence/processing
       if (onUpload) {
-        onUpload(videoUrl)
+        onUpload(file)
       }
-      
       onClose()
     } catch (error) {
       console.error("Failed to process video:", error)

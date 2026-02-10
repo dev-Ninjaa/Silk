@@ -172,12 +172,49 @@ export function VideoUploadNode(props: NodeViewProps) {
           <VideoUploadDialog
             editor={editor}
             onClose={() => setShowDialog(false)}
-            onUpload={(videoUrl: string) => {
-              updateAttributes({
-                src: videoUrl,
-                alt: "uploaded video",
-                title: "uploaded video",
-              })
+            onUpload={async (file: File) => {
+              try {
+                // Convert file to base64 data URL for persistence
+                const base64 = await import("@/editor/lib/tiptap-utils").then(({ fileToBase64 }) => fileToBase64(file))
+
+                // Immediately update node so video plays in-note
+                updateAttributes({
+                  src: base64,
+                  alt: file.name,
+                  title: file.name,
+                })
+
+                // Generate a correlation id so we can map the response
+                const correlationId = crypto.randomUUID()
+
+                // Dispatch a request to the app to create an Asset entry
+                const detail = {
+                  correlationId,
+                  name: file.name,
+                  type: "video",
+                  source: { kind: "file", dataUrl: base64 },
+                }
+
+                window.dispatchEvent(new CustomEvent("app:create-asset-request", { detail }))
+
+                // Listen for response (one-time); set assetId on node if returned
+                const onResponse = (ev: Event) => {
+                  // Type guard
+                  const ce = ev as CustomEvent<typeof detail & { assetId?: string }>
+                  if (ce?.detail?.correlationId !== correlationId) return
+
+                  const { assetId } = ce.detail || {}
+                  if (assetId) {
+                    updateAttributes({ assetId })
+                  }
+
+                  window.removeEventListener("app:create-asset-response", onResponse)
+                }
+
+                window.addEventListener("app:create-asset-response", onResponse)
+              } catch (err) {
+                console.error("Failed to persist uploaded video as asset:", err)
+              }
             }}
           />
         </div>
