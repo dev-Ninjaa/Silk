@@ -303,7 +303,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleDragStart = (e: React.DragEvent, noteId: string) => {
     const note = notes.find(n => n.id === noteId);
-    if (note?.isDeleted) {
+    if (!note || note.isDeleted) {
+      e.preventDefault();
+      return;
+    }
+    const noteCategory = categories.find(c => c.id === note.categoryId);
+    if (note.isDefault || noteCategory?.isDefault) {
       e.preventDefault();
       return;
     }
@@ -324,6 +329,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleDragOver = (e: React.DragEvent, targetType: 'category' | 'subcategory', targetId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverTarget({ type: targetType, id: targetId });
+  };
+
+  const handleDragEnter = (e: React.DragEvent, targetType: 'category' | 'subcategory', targetId: string) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
@@ -597,15 +609,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-white/60 ring-1 ring-blue-200'
                     : ''
                   }`}
-                onClick={() => {
-                  toggleCategory(category.id);
-                  onSelectCategory(category.id);
-                }}
-                onContextMenu={(e) => handleCategoryContextMenu(e, category.id)}
-                onDragOver={(e) => handleDragOver(e, 'category', category.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, category.id)}
-              >
+                  onClick={() => {
+                    toggleCategory(category.id);
+                    onSelectCategory(category.id);
+                  }}
+                  onContextMenu={(e) => handleCategoryContextMenu(e, category.id)}
+                  onDragEnter={(e) => handleDragEnter(e, 'category', category.id)}
+                  onDragOver={(e) => handleDragOver(e, 'category', category.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, category.id)}
+                >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <div
                     className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center"
@@ -699,15 +712,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               ? 'bg-white/60 ring-1 ring-blue-200'
                               : ''
                             }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectSubCategory(subCategory.id);
-                          }}
-                          onContextMenu={(e) => handleSubCategoryContextMenu(e, subCategory.id)}
-                          onDragOver={(e) => handleDragOver(e, 'subcategory', subCategory.id)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, category.id, subCategory.id)}
-                        >
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectSubCategory(subCategory.id);
+                            }}
+                            onContextMenu={(e) => handleSubCategoryContextMenu(e, subCategory.id)}
+                            onDragEnter={(e) => handleDragEnter(e, 'subcategory', subCategory.id)}
+                            onDragOver={(e) => handleDragOver(e, 'subcategory', subCategory.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, category.id, subCategory.id)}
+                          >
                           <div className="flex items-center gap-1.5 flex-1 min-w-0">
                             {subCategory.icon ? (
                               <div className="flex-shrink-0">
