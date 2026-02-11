@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Note, Block, Asset } from '@/app/types';
 import { TipTapNoteEditor } from '@/editor';
 import { RichContentRenderer } from './RichContentRenderer';
@@ -31,58 +31,75 @@ export const NoteView: React.FC<NoteViewProps> = ({
   onOpenNote
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const dragDepthRef = useRef(0);
+
+  const resetDragState = () => {
+    // Overlay was persisting because dragleave doesn't always fire on nested
+    // child transitions or when drop is handled by inner node views.
+    // We reset depth + state on any terminal drag event.
+    dragDepthRef.current = 0;
+    setIsDragOver(false);
+  };
+
+  const isAssetDrag = (e: React.DragEvent) => {
+    const types = Array.from(e.dataTransfer?.types || []);
+    return types.includes('itemType') || types.includes('itemtype');
+  };
+
+  useEffect(() => {
+    // Safety net: ensure global dragend/drop always clear overlay
+    const onDragEnd = () => resetDragState();
+    const onDrop = () => resetDragState();
+    window.addEventListener('dragend', onDragEnd);
+    window.addEventListener('drop', onDrop);
+    return () => {
+      window.removeEventListener('dragend', onDragEnd);
+      window.removeEventListener('drop', onDrop);
+    };
+  }, []);
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-
-    const assetId = e.dataTransfer.getData('text/plain');
-    const itemType = e.dataTransfer.getData('itemType');
-
-    // Only handle asset drops for image/video/audio
-    if (itemType === 'asset' && assetId.startsWith('asset-')) {
-      const asset = assets.find(a => a.id === assetId);
-      if (asset && ['image', 'video', 'audio'].includes(asset.type)) {
-        // Prefer embedded dataUrl when available to avoid network fetches
-        const src = asset.source?.kind === 'file' ? asset.source?.dataUrl : undefined
-
-        // Create an asset block (will be converted to TipTap asset node automatically)
-        const newBlock = {
-          id: Math.random().toString(36).substring(2, 11),
-          type: 'asset' as const,
-          content: `{{asset:${assetId}}}`,
-          media: {
-            type: asset.type as 'image' | 'video' | 'audio',
-            src: src || `/assets/${assetId}`,
-            alt: asset.name || '',
-            caption: asset.name || '',
-            assetId,
-          }
-        };
-        onUpdateBlocks(note.id, [...note.blocks, newBlock]);
-      }
-    }
+    if (!isAssetDrag(e)) return;
+    // Do not prevent default here. Let the editor's internal drop handler
+    // run so the asset node is inserted and then persisted via onUpdate.
+    resetDragState();
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (!isAssetDrag(e)) return;
     e.preventDefault();
-    const itemType = e.dataTransfer.types.includes('itemtype') || e.dataTransfer.types.includes('itemType');
-    if (itemType) {
-      setIsDragOver(true);
-    }
+    if (!isDragOver) setIsDragOver(true);
   };
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (!isAssetDrag(e)) return;
+    e.preventDefault();
+    // Use a depth counter because dragenter/dragleave fires for child nodes.
+    dragDepthRef.current += 1;
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!isAssetDrag(e)) return;
+    e.preventDefault();
+    const related = e.relatedTarget as Node | null;
+    if (related && e.currentTarget.contains(related)) {
+      return;
+    }
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) {
+      setIsDragOver(false);
+    }
   };
 
   if (!isReadMode) {
     // Edit mode - use TipTap editor with title input
     return (
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDropCapture={handleDrop}
+        onDragOverCapture={handleDragOver}
+        onDragEnterCapture={handleDragEnter}
+        onDragLeaveCapture={handleDragLeave}
         className={`relative w-full ${isDragOver ? 'ring-2 ring-stone-400 ring-inset' : ''}`}
       >
         {/* Title Input */}

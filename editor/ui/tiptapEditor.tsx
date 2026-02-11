@@ -269,10 +269,14 @@ export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTit
   // Update editor content when note.blocks change externally
   // (e.g., when loading a different note)
   useEffect(() => {
-    if (editor && note.blocks) {
-      const tiptapContent = convertBlocksToTipTap(note.blocks)
+    if (!editor || !note.blocks) return
+    const tiptapContent = convertBlocksToTipTap(note.blocks)
+    // Avoid flushSync inside render/lifecycle by deferring to a microtask.
+    // This prevents "flushSync was called from inside a lifecycle method" warnings.
+    queueMicrotask(() => {
+      if (!editor || editor.isDestroyed) return
       editor.commands.setContent(tiptapContent)
-    }
+    })
   }, [note.id]) // Only update when note ID changes to avoid disrupting active editing
 
   return (
