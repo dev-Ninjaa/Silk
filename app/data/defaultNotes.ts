@@ -59,6 +59,7 @@ export const defaultNotes: Note[] = [
     ],
     categoryId: 'cat-1',
     isDefault: true,
+    isPinned: true,
     createdAt: new Date('2024-12-31T18:30:00.000Z'),
     updatedAt: new Date('2026-02-11T19:59:14.003Z'),
     lastOpenedAt: new Date('2026-02-11T19:59:13.652Z')
@@ -112,6 +113,7 @@ export const defaultNotes: Note[] = [
       { id: 'ewiz8x3gz', type: 'text', content: '' }
     ],
     categoryId: 'cat-1',
+    isPinned: true,
     createdAt: new Date('2026-02-11T19:53:15.036Z'),
     updatedAt: new Date('2026-02-11T19:59:14.789Z'),
     lastOpenedAt: new Date('2026-02-11T19:59:14.436Z')
