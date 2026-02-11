@@ -206,8 +206,9 @@ export const SlashMenu: React.FC<SlashMenuProps & { editor?: import('@tiptap/rea
       if (!el || !editor || !editor.view) return
 
       try {
+        // Keep the editor focused; focusing the menu can blur the editor and
+        // cause the suggestion UI to disappear while the suggestion is still active.
         el.tabIndex = -1
-        el.focus()
       } catch (err) {
         // ignore
       }
@@ -268,11 +269,16 @@ export const SlashMenu: React.FC<SlashMenuProps & { editor?: import('@tiptap/rea
     <SlashDropdownMenu
       editor={editor}
       config={{ enabledItems: [], customItems }}
+      keepOpenOnEditorClick
+      persistOnExit
+      closeOnEscape={false}
       floatingOptions={{
-        placement: 'bottom-start',
+        placement: 'top-start',
         middleware: [
-          offset(6),
-          shift(),
+          // Position a bit to the right and slightly above the bottom edge
+          // of the trigger so it feels anchored but not flush to the cursor.
+          offset({ mainAxis: 8, crossAxis: 10 }),
+          shift({ padding: 8 }),
           size({
             apply({ availableHeight, elements }) {
               if (elements.floating) {
