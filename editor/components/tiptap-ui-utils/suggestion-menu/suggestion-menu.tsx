@@ -128,7 +128,20 @@ export const SuggestionMenu = ({
       editor,
 
       allow(props) {
-        const $from = editor.state.doc.resolve(props.range.from)
+        // Guard against stale ranges: if the suggestion's range is outside the current
+        // document (e.g., the doc changed while a suggestion was active), don't allow it.
+        const docSize = editor.state.doc.content.size
+        if (props.range.from > docSize || props.range.to > docSize) {
+          return false
+        }
+
+        let $from
+        try {
+          $from = editor.state.doc.resolve(props.range.from)
+        } catch (err) {
+          // If resolve throws for any reason, refuse to allow the suggestion
+          return false
+        }
 
         // Check if we're inside an image node
         for (let depth = $from.depth; depth > 0; depth--) {
