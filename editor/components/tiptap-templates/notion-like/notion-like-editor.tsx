@@ -227,7 +227,7 @@ export function EditorProvider(props: EditorProviderProps) {
         emojis: gitHubEmojis.filter(
           (emoji) => !emoji.name.includes("regional")
         ),
-        forceFallbackImages: true,
+        forceFallbackImages: false,
       }),
       TableKit.configure({
         table: {

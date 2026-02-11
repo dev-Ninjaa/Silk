@@ -255,7 +255,7 @@ export function SimpleEditor() {
         emojis: gitHubEmojis.filter(
           (emoji) => !emoji.name.includes("regional")
         ),
-        forceFallbackImages: true,
+        forceFallbackImages: false,
       }),
       ImageUploadNode.configure({
         accept: "image/*",

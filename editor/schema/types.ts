@@ -58,6 +58,13 @@ export interface LinkMark {
   title?: string;
 }
 
+export interface InlineEmoji {
+  start: number;
+  end: number;
+  attrs: Record<string, any>;
+  text?: string;
+}
+
 export interface Block {
   id: string;
   type: BlockType;
@@ -67,6 +74,7 @@ export interface Block {
   mentions?: NoteMention[];
   marks?: Mark[];
   links?: LinkMark[];
+  emojis?: InlineEmoji[];
   textAlign?: 'left' | 'center' | 'right' | 'justify';
   media?: MediaContent;
   math?: MathContent;

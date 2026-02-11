@@ -1,4 +1,4 @@
-import { Block, NoteMention } from '@/editor/schema/types';
+import { Block, InlineEmoji, NoteMention } from '@/editor/schema/types';
 import { JSONContent } from '@tiptap/core';
 
 /**
@@ -45,7 +45,7 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
         const currentBlock = blocks[i];
         if (currentBlock.type !== block.type) break;
 
-        const listItemContent = parseBlockContent(currentBlock.content, currentBlock.mentions, currentBlock.marks, currentBlock.links);
+        const listItemContent = parseBlockContent(currentBlock.content, currentBlock.mentions, currentBlock.marks, currentBlock.links, currentBlock.emojis);
 
         if (block.type === 'todo') {
           listItems.push({
@@ -90,7 +90,7 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
         content.push({
           type: 'heading',
           attrs: { level, textAlign: block.textAlign },
-          content: parseBlockContent(block.content, block.mentions, block.marks, block.links),
+          content: parseBlockContent(block.content, block.mentions, block.marks, block.links, block.emojis),
         });
         break;
       }
@@ -99,7 +99,7 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
         content.push({
           type: 'paragraph',
           attrs: { textAlign: block.textAlign },
-          content: parseBlockContent(block.content, block.mentions, block.marks, block.links),
+          content: parseBlockContent(block.content, block.mentions, block.marks, block.links, block.emojis),
         });
         break;
       }
@@ -111,7 +111,7 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
             {
               type: 'paragraph',
               attrs: { textAlign: block.textAlign },
-              content: parseBlockContent(block.content, block.mentions, block.marks, block.links),
+              content: parseBlockContent(block.content, block.mentions, block.marks, block.links, block.emojis),
             },
           ],
         });
@@ -152,7 +152,7 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
           console.warn('[Table Conversion] Failed to parse table JSON, falling back to text', err);
           content.push({
             type: 'paragraph',
-            content: parseBlockContent(block.content, block.mentions, block.marks, block.links),
+            content: parseBlockContent(block.content, block.mentions, block.marks, block.links, block.emojis),
           });
         }
         break;
@@ -221,7 +221,7 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
         // Fallback: any unknown type becomes a paragraph
         content.push({
           type: 'paragraph',
-          content: parseBlockContent(block.content, block.mentions, block.marks, block.links),
+          content: parseBlockContent(block.content, block.mentions, block.marks, block.links, block.emojis),
         });
       }
     }
@@ -239,7 +239,13 @@ export function convertBlocksToTipTap(blocks: Block[]): JSONContent {
  * Parse block content string with embedded mentions into TipTap content nodes.
  * Mentions are marked with @title and have indices tracked in the mentions array.
  */
-function parseBlockContent(content: string, mentions?: NoteMention[], marks?: any[] , links?: any[]): JSONContent[] {
+function parseBlockContent(
+  content: string,
+  mentions?: NoteMention[],
+  marks?: any[],
+  links?: any[],
+  emojis?: InlineEmoji[]
+): JSONContent[] {
   if (!content) return [];
 
   const contentNodes: JSONContent[] = [];
@@ -252,12 +258,18 @@ function parseBlockContent(content: string, mentions?: NoteMention[], marks?: an
   (mentions || []).forEach((m) => { breaks.add(m.start); breaks.add(m.end); });
   (marks || []).forEach((m) => { breaks.add(m.start); breaks.add(m.end); });
   (links || []).forEach((l) => { breaks.add(l.start); breaks.add(l.end); });
+  (emojis || []).forEach((e) => { breaks.add(e.start); breaks.add(e.end); });
 
   const points = Array.from(breaks).sort((a, b) => a - b);
 
   // Helper to find a mention covering a range
   const findMention = (start: number, end: number) => {
     return (mentions || []).find((m) => m.start <= start && m.end >= end);
+  };
+
+  // Helper to find an emoji covering a range
+  const findEmoji = (start: number, end: number) => {
+    return (emojis || []).find((e) => e.start <= start && e.end >= end);
   };
 
   // Helper to get marks covering a range
@@ -279,6 +291,15 @@ function parseBlockContent(content: string, mentions?: NoteMention[], marks?: an
     const mention = findMention(start, end);
     if (mention) {
       contentNodes.push({ type: 'mention', attrs: { id: mention.noteId, label: mention.title } });
+      continue;
+    }
+
+    // Emoji nodes were disappearing because custom emoji attrs were lost in text-only serialization.
+    // We reconstruct emoji nodes from stored inline emoji metadata to keep round-trip integrity.
+    const emoji = findEmoji(start, end);
+    if (emoji && emoji.attrs && Object.keys(emoji.attrs).length > 0) {
+      // Preserve emoji nodes instead of flattening to text (prevents custom emoji loss).
+      contentNodes.push({ type: 'emoji', attrs: { ...emoji.attrs } });
       continue;
     }
 

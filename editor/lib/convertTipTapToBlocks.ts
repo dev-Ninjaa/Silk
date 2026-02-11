@@ -1,4 +1,4 @@
-import { Block, BlockType, NoteMention } from '@/editor/schema/types';
+import { Block, BlockType, InlineEmoji, NoteMention } from '@/editor/schema/types';
 import { JSONContent } from '@tiptap/core';
 import { generateId } from '@/editor/core/utils';
 
@@ -69,6 +69,7 @@ function convertNode(node: JSONContent): Block[] {
         mentions: mentions.length > 0 ? mentions : undefined,
         marks: meta.marks.length > 0 ? meta.marks : undefined,
         links: meta.links.length > 0 ? meta.links : undefined,
+        emojis: meta.emojis.length > 0 ? meta.emojis : undefined,
         textAlign: node.attrs?.textAlign || node.attrs?.align || undefined,
       });
       break;
@@ -85,6 +86,7 @@ function convertNode(node: JSONContent): Block[] {
         mentions: mentions.length > 0 ? mentions : undefined,
         marks: meta.marks.length > 0 ? meta.marks : undefined,
         links: meta.links.length > 0 ? meta.links : undefined,
+        emojis: meta.emojis.length > 0 ? meta.emojis : undefined,
         textAlign: node.attrs?.textAlign || node.attrs?.align || undefined,
       });
       break;
@@ -96,7 +98,7 @@ function convertNode(node: JSONContent): Block[] {
           if (listItem.type === 'listItem' && listItem.content) {
             // Extract text from paragraph inside listItem
             const paraNode = listItem.content.find((n) => n.type === 'paragraph');
-            const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [] };
+            const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [], emojis: [] };
             const mentions = paraNode ? extractMentions(paraNode.content) : [];
 
             blocks.push({
@@ -106,6 +108,7 @@ function convertNode(node: JSONContent): Block[] {
               mentions: mentions.length > 0 ? mentions : undefined,
               marks: meta.marks.length > 0 ? meta.marks : undefined,
               links: meta.links.length > 0 ? meta.links : undefined,
+              emojis: meta.emojis.length > 0 ? meta.emojis : undefined,
             });
           }
         }
@@ -118,7 +121,7 @@ function convertNode(node: JSONContent): Block[] {
         for (const listItem of node.content) {
           if (listItem.type === 'listItem' && listItem.content) {
             const paraNode = listItem.content.find((n) => n.type === 'paragraph');
-            const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [] };
+            const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [], emojis: [] };
             const mentions = paraNode ? extractMentions(paraNode.content) : [];
 
             blocks.push({
@@ -128,6 +131,7 @@ function convertNode(node: JSONContent): Block[] {
               mentions: mentions.length > 0 ? mentions : undefined,
               marks: meta.marks.length > 0 ? meta.marks : undefined,
               links: meta.links.length > 0 ? meta.links : undefined,
+              emojis: meta.emojis.length > 0 ? meta.emojis : undefined,
             });
           }
         }
@@ -140,7 +144,7 @@ function convertNode(node: JSONContent): Block[] {
         for (const taskItem of node.content) {
           if (taskItem.type === 'taskItem' && taskItem.content) {
             const paraNode = taskItem.content.find((n) => n.type === 'paragraph');
-            const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [] };
+            const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [], emojis: [] };
             const mentions = paraNode ? extractMentions(paraNode.content) : [];
             const checked = taskItem.attrs?.checked ?? false;
 
@@ -152,6 +156,7 @@ function convertNode(node: JSONContent): Block[] {
               mentions: mentions.length > 0 ? mentions : undefined,
               marks: meta.marks.length > 0 ? meta.marks : undefined,
               links: meta.links.length > 0 ? meta.links : undefined,
+              emojis: meta.emojis.length > 0 ? meta.emojis : undefined,
             });
           }
         }
@@ -163,14 +168,15 @@ function convertNode(node: JSONContent): Block[] {
       // Extract text from first paragraph in blockquote
       if (node.content) {
         const paraNode = node.content.find((n) => n.type === 'paragraph');
-        const content = paraNode ? nodesToText(paraNode.content) : '';
+        const meta = paraNode ? nodesToTextWithMeta(paraNode.content) : { text: '', marks: [], links: [], emojis: [] };
         const mentions = paraNode ? extractMentions(paraNode.content) : [];
 
         blocks.push({
           id: generateId(),
           type: 'quote',
-          content,
+          content: meta.text,
           mentions: mentions.length > 0 ? mentions : undefined,
+          emojis: meta.emojis.length > 0 ? meta.emojis : undefined,
         });
       }
       break;
@@ -328,12 +334,26 @@ function convertNode(node: JSONContent): Block[] {
 /**
  * Extract plain text from an array of TipTap nodes, handling mentions and other inline elements.
  */
-function nodesToTextWithMeta(nodes: JSONContent[] | undefined): { text: string; marks: any[]; links: any[] } {
-  if (!nodes) return { text: '', marks: [], links: [] };
+function nodesToTextWithMeta(nodes: JSONContent[] | undefined): { text: string; marks: any[]; links: any[]; emojis: InlineEmoji[] } {
+  if (!nodes) return { text: '', marks: [], links: [], emojis: [] };
 
   let text = '';
   const marks: any[] = [];
   const links: any[] = [];
+  const emojis: InlineEmoji[] = [];
+
+  // Emoji nodes were disappearing because we only serialized inline text.
+  // Custom emojis often omit unicode, so they were flattened to an empty string.
+  // We preserve emoji attrs + positions to ensure round-trip integrity.
+  const getEmojiDisplayText = (attrs?: Record<string, any>) => {
+    if (!attrs) return '';
+    if (typeof attrs.emoji === 'string' && attrs.emoji.length > 0) return attrs.emoji;
+    if (typeof attrs.unicode === 'string' && attrs.unicode.length > 0) return attrs.unicode;
+    if (Array.isArray(attrs.shortcodes) && attrs.shortcodes.length > 0) return attrs.shortcodes[0];
+    if (typeof attrs.shortcode === 'string' && attrs.shortcode.length > 0) return attrs.shortcode;
+    if (typeof attrs.name === 'string' && attrs.name.length > 0) return `:${attrs.name}:`;
+    return ':emoji:';
+  };
 
   const walk = (n: JSONContent) => {
     if (n.type === 'text') {
@@ -357,12 +377,17 @@ function nodesToTextWithMeta(nodes: JSONContent[] | undefined): { text: string; 
       text += label;
       const end = text.length;
     } else if (n.type === 'emoji') {
-      // TipTap emoji node - prefer unicode attribute or shortcode
+      // TipTap emoji node - preserve attrs and track positions for round-trip
       const start = text.length;
-      const emojiChar = (n.attrs && (n.attrs.unicode || n.attrs.emoji)) || '';
-      const shortcode = n.attrs?.shortcode || '';
-      text += emojiChar || shortcode || '';
+      const displayText = getEmojiDisplayText(n.attrs);
+      text += displayText;
       const end = text.length;
+      emojis.push({
+        start,
+        end,
+        attrs: { ...(n.attrs || {}) },
+        text: displayText,
+      });
     } else if (n.content) {
       for (const child of n.content) walk(child as JSONContent);
     }
@@ -370,7 +395,7 @@ function nodesToTextWithMeta(nodes: JSONContent[] | undefined): { text: string; 
 
   for (const n of nodes) walk(n as JSONContent);
 
-  return { text, marks, links };
+  return { text, marks, links, emojis };
 }
 
 // Backwards-compatible helper that returns just the text portion
@@ -402,6 +427,17 @@ function extractMentions(nodes: JSONContent[] | undefined): NoteMention[] {
       });
 
       currentPos += label.length;
+    } else if (node.type === 'emoji') {
+      // Keep mention offsets aligned with text that includes emoji placeholders.
+      const attrs = node.attrs || {};
+      const displayText =
+        (typeof attrs.emoji === 'string' && attrs.emoji.length > 0 && attrs.emoji) ||
+        (typeof attrs.unicode === 'string' && attrs.unicode.length > 0 && attrs.unicode) ||
+        (Array.isArray(attrs.shortcodes) && attrs.shortcodes.length > 0 && attrs.shortcodes[0]) ||
+        (typeof attrs.shortcode === 'string' && attrs.shortcode.length > 0 && attrs.shortcode) ||
+        (typeof attrs.name === 'string' && attrs.name.length > 0 && `:${attrs.name}:`) ||
+        '';
+      currentPos += displayText.length;
     } else if (node.content) {
       const childMentions = extractMentions(node.content);
       for (const mention of childMentions) {
