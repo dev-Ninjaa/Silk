@@ -226,7 +226,12 @@ export const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
 
   const handleDragStart = (e: React.DragEvent, noteId: string) => {
     const note = notes.find(n => n.id === noteId);
-    if (note?.isDeleted) {
+    if (!note || note.isDeleted) {
+      e.preventDefault();
+      return;
+    }
+    const noteCategory = categories.find(c => c.id === note.categoryId);
+    if (note.isDefault || noteCategory?.isDefault) {
       e.preventDefault();
       return;
     }
@@ -247,6 +252,13 @@ export const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
   };
 
   const handleDragOver = (e: React.DragEvent, targetType: 'category' | 'subcategory', targetId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverTarget({ type: targetType, id: targetId });
+  };
+
+  const handleDragEnter = (e: React.DragEvent, targetType: 'category' | 'subcategory', targetId: string) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
@@ -383,6 +395,7 @@ export const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                     onSelectCategory(category.id);
                   }}
                   onContextMenu={(e) => handleCategoryContextMenu(e, category.id)}
+                  onDragEnter={(e) => handleDragEnter(e, 'category', category.id)}
                   onDragOver={(e) => handleDragOver(e, 'category', category.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, category.id)}
@@ -491,6 +504,7 @@ export const SecondarySidebar: React.FC<SecondarySidebarProps> = ({
                               onSelectSubCategory(subCategory.id);
                             }}
                             onContextMenu={(e) => handleSubCategoryContextMenu(e, subCategory.id)}
+                            onDragEnter={(e) => handleDragEnter(e, 'subcategory', subCategory.id)}
                             onDragOver={(e) => handleDragOver(e, 'subcategory', subCategory.id)}
                             onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDrop(e, category.id, subCategory.id)}
