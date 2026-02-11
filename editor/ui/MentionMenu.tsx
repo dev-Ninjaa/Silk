@@ -157,7 +157,10 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
       <div
         // Prevent mousedown from stealing focus from the editor so the suggestion
         // plugin doesn't close when the user tries to interact with the menu.
-        onMouseDown={(e) => e.preventDefault()}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
         className="mention-menu absolute z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
         style={style}
       >
@@ -189,8 +192,14 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
           return (
             <button
               key={note.id}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onSelect(note.id, note.title)}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onClick={() => {
+                onSelect(note.id, note.title)
+                onClose()
+              }}
               onMouseEnter={() => { setSelectedIndex(index); setHoveredIndex(index) }}
               onMouseLeave={() => setHoveredIndex(null)}
               className={`group flex items-center gap-3 px-3 py-1.5 mx-1 rounded text-sm transition-colors duration-150 cursor-pointer ${isSelected || hoveredIndex === index

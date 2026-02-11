@@ -36,6 +36,44 @@ export function createMentionSuggestion(notesOrGetter?: Array<{ id: string; titl
         let container: HTMLElement | null = null
         let root: any = null
         let currentProps: any = null
+        let cleanupTimeout: number | null = null
+
+        const scheduleCleanup = (immediate = false) => {
+          if (!root && !container) {
+            return
+          }
+
+          const scheduledRoot = root
+          const scheduledContainer = container
+          root = null
+          container = null
+          currentProps = null
+
+          if (cleanupTimeout) {
+            clearTimeout(cleanupTimeout)
+            cleanupTimeout = null
+          }
+
+          const delay = immediate ? 0 : 200
+
+          cleanupTimeout = window.setTimeout(() => {
+            try {
+              if (scheduledRoot) {
+                try {
+                  scheduledRoot.unmount()
+                } catch (err) {
+                  console.warn('[Mention] scheduled unmount error', err)
+                }
+              }
+
+              if (scheduledContainer?.parentNode) {
+                scheduledContainer.parentNode.removeChild(scheduledContainer)
+              }
+            } finally {
+              cleanupTimeout = null
+            }
+          }, delay)
+        }
 
         const updatePosition = (props: any) => {
           if (!container) return
@@ -86,17 +124,21 @@ export function createMentionSuggestion(notesOrGetter?: Array<{ id: string; titl
                 noTransform
                 onSelect={(id: string, title: string) => {
                   props.command({ id, label: title })
-                  // Mark container for immediate cleanup and trigger exit
                   if (container) {
                     try { (container as any).__mentionImmediateClose = true } catch (err) { }
                   }
-                  currentProps?.onExit?.()
+                  scheduleCleanup(true)
+                  try {
+                    props.editor?.chain().focus().run()
+                  } catch (err) {
+                    // ignore focus errors
+                  }
                 }}
                 onClose={() => {
                   if (container) {
                     try { (container as any).__mentionImmediateClose = true } catch (err) { }
                   }
-                  currentProps?.onExit?.()
+                  scheduleCleanup(true)
                 }}
               />
             )
@@ -117,13 +159,18 @@ export function createMentionSuggestion(notesOrGetter?: Array<{ id: string; titl
                     if (container) {
                       try { (container as any).__mentionImmediateClose = true } catch (err) { }
                     }
-                    currentProps?.onExit?.()
+                    scheduleCleanup(true)
+                    try {
+                      props.editor?.chain().focus().run()
+                    } catch (err) {
+                      // ignore focus errors
+                    }
                   }}
                   onClose={() => {
                     if (container) {
                       try { (container as any).__mentionImmediateClose = true } catch (err) { }
                     }
-                    currentProps?.onExit?.()
+                    scheduleCleanup(true)
                   }}
                 />
               )
@@ -142,51 +189,10 @@ export function createMentionSuggestion(notesOrGetter?: Array<{ id: string; titl
             return false
           },
           onExit: () => {
-            // Avoid synchronous unmount during React renders by scheduling cleanup.
-            // We keep references for the scheduled cleanup, then immediately clear
-            // the local variables so future renders don't interact with them.
-            const scheduledRoot = root
-            const scheduledContainer = container
-            root = null
-            container = null
-            currentProps = null
-
-            // check whether immediate close was requested on the DOM container
-            const immediateFlag = scheduledContainer ? !!(scheduledContainer as any).__mentionImmediateClose : false
-            const cleanupDelay = immediateFlag ? 0 : 200 // small grace period in ms
-
-            if (scheduledContainer) {
-              const id = (setTimeout(() => {
-                try {
-                  // If the id was cleared or replaced, do not cleanup
-                  if ((scheduledContainer as any).__mentionCleanupId !== id) return
-
-                  if (scheduledRoot) {
-                    try {
-                      scheduledRoot.unmount()
-                    } catch (err) {
-                      console.warn('[Mention] scheduled unmount error', err)
-                    }
-                  }
-
-                  if (scheduledContainer.parentNode) {
-                    scheduledContainer.parentNode.removeChild(scheduledContainer)
-                  }
-                } finally {
-                  try { delete (scheduledContainer as any).__mentionCleanupId } catch (e) { }
-                }
-              }, cleanupDelay) as unknown) as number
-
-              try {
-                ;(scheduledContainer as any).__mentionCleanupId = id
-              } catch (err) {
-                // ignore assignment failures
-              }
-            } else if (scheduledRoot) {
-              setTimeout(() => {
-                try { scheduledRoot.unmount() } catch (err) { console.warn('[Mention] scheduled unmount error', err) }
-              }, cleanupDelay)
-            }
+            const immediateFlag = container
+              ? !!(container as any).__mentionImmediateClose
+              : false
+            scheduleCleanup(immediateFlag)
           },
         }
       },
