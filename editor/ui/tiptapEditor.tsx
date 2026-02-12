@@ -44,6 +44,7 @@ import "@/components/tiptap-node/table-node/styles/prosemirror-table.scss"
 // --- Converters ---
 import { convertBlocksToTipTap } from "@/editor/lib/convertBlocksToTipTap"
 import { convertTipTapToBlocks } from "@/editor/lib/convertTipTapToBlocks"
+import { withAppleEmojiFallbacks } from "@/editor/lib/apple-emoji"
 
 // --- Custom Nodes & Extensions ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
@@ -225,10 +226,10 @@ export function TipTapNoteEditor({ note, allNotes = [], assets = [], onUpdateTit
       Color,
       Selection,
       Emoji.configure({
-        emojis: gitHubEmojis.filter(
-          (emoji) => !emoji.name.includes("regional")
+        emojis: withAppleEmojiFallbacks(
+          gitHubEmojis.filter((emoji) => !emoji.name.includes("regional"))
         ),
-        forceFallbackImages: false,
+        forceFallbackImages: true,
       }),
       ImageUploadNode.configure({
         accept: "image/*",
