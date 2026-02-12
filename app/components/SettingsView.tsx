@@ -125,10 +125,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const [selectedBackupFile, setSelectedBackupFile] = useState<string | null>(null);
 
-  const handleBackupFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBackupFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedBackupFile(file.name);
+    if (!file) {
+      return;
+    }
+
+    setSelectedBackupFile(file.name);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const { notes: importedNotes, categories: importedCategories, assets: importedAssets, reflections: importedReflections } =
+        parsed ?? {};
+
+      if (!Array.isArray(importedNotes) || !Array.isArray(importedCategories)) {
+        throw new Error('Missing notes or categories in the snapshot');
+      }
+
+      const persist = (key: string, payload: unknown[]) => {
+        window.localStorage.setItem(key, JSON.stringify(payload));
+      };
+
+      persist('pulm-notes', importedNotes);
+      persist('pulm-categories', importedCategories);
+
+      if (Array.isArray(importedAssets)) {
+        persist('pulm-assets', importedAssets);
+      }
+
+      if (Array.isArray(importedReflections)) {
+        persist('pulm-reflections', importedReflections);
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error('Unable to import snapshot', error);
+      if (typeof window !== 'undefined') {
+        window.alert('Unable to import the selected snapshot. Make sure it is a valid Pulm backup file.');
+      }
+    } finally {
+      // Clear the input to allow re-selecting the same file later.
+      event.target.value = '';
     }
   };
 
