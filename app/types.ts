@@ -48,6 +48,13 @@ export interface AssetMention {
   end: number;
 }
 
+export interface InlineEmoji {
+  start: number;
+  end: number;
+  attrs: Record<string, any>;
+  text?: string;
+}
+
 export interface Block {
   id: string;
   type: BlockType;
@@ -58,12 +65,13 @@ export interface Block {
   assetMentions?: AssetMention[];
   // Rich formatting metadata
   marks?: Array<{
-    type: 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'superscript' | 'subscript' | 'highlight' | 'color';
+    type: 'bold' | 'italic' | 'underline' | 'strike' | 'code' | 'superscript' | 'subscript' | 'highlight' | 'color' | 'textStyle';
     start: number;
     end: number;
     attrs?: { color?: string; backgroundColor?: string };
   }>;
   links?: Array<{ href: string; start: number; end: number; title?: string }>;
+  emojis?: InlineEmoji[];
   textAlign?: 'left' | 'center' | 'right' | 'justify';
   media?: MediaContent;
   math?: MathContent;
