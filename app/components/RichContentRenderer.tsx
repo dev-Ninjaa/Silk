@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { parseRichContent, ContentToken } from '@/app/lib/richContentParser';
 import { ExternalLink } from 'lucide-react';
 import { Asset } from '@/app/types';
+import { openExternal } from '@/app/lib/openExternal';
 
 interface RichContentRendererProps {
   content: string;
@@ -166,8 +167,10 @@ const TokenRenderer: React.FC<TokenRendererProps> = ({ token, onAssetClick }) =>
     return (
       <a
         href={token.url}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={(e) => {
+          e.preventDefault();
+          openExternal(token.url);
+        }}
         className="cursor-pointer text-stone-700 underline underline-offset-2 hover:text-stone-900 transition-colors inline-flex items-center gap-1"
       >
         {token.text}
@@ -182,8 +185,10 @@ const TokenRenderer: React.FC<TokenRendererProps> = ({ token, onAssetClick }) =>
       return (
         <a
           href={token.url}
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={(e) => {
+            e.preventDefault();
+            openExternal(token.url);
+          }}
           className="cursor-pointer text-stone-700 underline underline-offset-2 hover:text-stone-900 transition-colors inline-flex items-center gap-1"
         >
           {token.url}

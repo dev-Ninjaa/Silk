@@ -9,6 +9,7 @@ import { SubCategoryContextMenu } from './SubCategoryContextMenu';
 import { CategoryModal } from './CategoryModal';
 import { SubCategoryModal } from './SubCategoryModal';
 import { AssetContextMenu } from './AssetContextMenu';
+import { setDragData, clearDragData, getDragData } from '@/app/lib/openExternal';
 
 interface SidebarProps {
   viewMode: ViewMode;
@@ -312,9 +313,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       e.preventDefault();
       return;
     }
+    
+    // Set global drag data for Tauri compatibility
+    setDragData('note', noteId);
+    
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', noteId);
     e.dataTransfer.setData('itemType', 'note');
+    try {
+      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'note', id: noteId }));
+    } catch (err) {
+      // Ignore
+    }
   };
 
   const handleAssetDragStart = (e: React.DragEvent, assetId: string) => {
@@ -323,23 +333,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
       e.preventDefault();
       return;
     }
+    
+    console.log('[Sidebar] Setting drag data for asset:', assetId);
+    
+    // Set global drag data for Tauri compatibility
+    setDragData('asset', assetId);
+    
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', assetId);
     e.dataTransfer.setData('itemType', 'asset');
+    // Add additional format for Tauri compatibility
+    try {
+      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'asset', id: assetId }));
+    } catch (err) {
+      console.warn('[Sidebar] Failed to set JSON data:', err);
+    }
+  };
+  
+  const handleDragEnd = () => {
+    console.log('[Sidebar] Clearing drag data');
+    clearDragData();
   };
 
   const handleDragOver = (e: React.DragEvent, targetType: 'category' | 'subcategory', targetId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverTarget({ type: targetType, id: targetId });
+    // Check if we have drag data (either global or in dataTransfer)
+    const globalData = getDragData();
+    const types = Array.from(e.dataTransfer?.types || []);
+    
+    if (globalData.type || types.includes('itemType') || types.includes('itemtype')) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      setDragOverTarget({ type: targetType, id: targetId });
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent, targetType: 'category' | 'subcategory', targetId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverTarget({ type: targetType, id: targetId });
+    // Check if we have drag data (either global or in dataTransfer)
+    const globalData = getDragData();
+    const types = Array.from(e.dataTransfer?.types || []);
+    
+    if (globalData.type || types.includes('itemType') || types.includes('itemtype')) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      setDragOverTarget({ type: targetType, id: targetId });
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -352,8 +391,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
-    const itemId = e.dataTransfer.getData('text/plain');
-    const itemType = e.dataTransfer.getData('itemType');
+    // Try to get data from multiple sources (Tauri compatibility)
+    let itemId = e.dataTransfer.getData('text/plain');
+    let itemType = e.dataTransfer.getData('itemType');
+    
+    console.log('[Sidebar Drop] Initial - itemId:', itemId, 'itemType:', itemType);
+    
+    // Check global drag data first (for Tauri)
+    const globalData = getDragData();
+    console.log('[Sidebar Drop] Global data:', globalData);
+    if (globalData.type && globalData.id) {
+      itemType = globalData.type;
+      itemId = globalData.id;
+    }
+    
+    // Try JSON format
+    if (!itemId || !itemType) {
+      try {
+        const jsonData = e.dataTransfer.getData('application/json');
+        if (jsonData) {
+          const parsed = JSON.parse(jsonData);
+          if (parsed.type && parsed.id) {
+            itemType = parsed.type;
+            itemId = parsed.id;
+          }
+        }
+      } catch (err) {
+        // Ignore
+      }
+    }
+    
+    console.log('[Sidebar Drop] Final - itemId:', itemId, 'itemType:', itemType);
 
     if (itemType === 'asset') {
       const asset = assets.find(a => a.id === itemId);
@@ -665,6 +733,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }`}
                       draggable
                       onDragStart={(e) => handleDragStart(e, note.id)}
+                      onDragEnd={handleDragEnd}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectNote(note.id);
@@ -687,6 +756,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors hover:bg-white/50 text-stone-500 group"
                         draggable
                         onDragStart={(e) => handleAssetDragStart(e, asset.id)}
+                        onDragEnd={handleDragEnd}
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenAsset(asset.id);
@@ -767,6 +837,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               }`}
                             draggable
                             onDragStart={(e) => handleDragStart(e, note.id)}
+                            onDragEnd={handleDragEnd}
                             onClick={(e) => {
                               e.stopPropagation();
                               onSelectNote(note.id);
@@ -789,6 +860,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer ml-4 transition-colors hover:bg-white/50 text-stone-500"
                               draggable
                               onDragStart={(e) => handleAssetDragStart(e, asset.id)}
+                              onDragEnd={handleDragEnd}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onOpenAsset(asset.id);
