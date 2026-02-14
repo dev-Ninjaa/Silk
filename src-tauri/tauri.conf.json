@@ -2,9 +2,8 @@
   "productName": "Pulm Notes",
   "version": "0.0.1",
   "identifier": "com.pulm.notes",
-  "build": {
-    "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:3000",
+  "build": { 
+    "beforeDevCommand": "",
     "beforeBuildCommand": "bun run build",
     "frontendDist": "../out"
   },
