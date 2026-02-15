@@ -4,6 +4,16 @@
   "description": "Default permissions for the application",
   "windows": ["main"],
   "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:webview:allow-set-webview-zoom",
+    "core:path:default",
+    "core:event:default",
+    "core:menu:default",
+    "core:tray:default",
     "shell:allow-open"
   ]
 }
