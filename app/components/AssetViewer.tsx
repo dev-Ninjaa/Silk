@@ -12,6 +12,7 @@ interface AssetViewerProps {
 
 export const AssetViewer: React.FC<AssetViewerProps> = ({ asset, onClose }) => {
   const [openInNewTab, setOpenInNewTab] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -30,6 +31,37 @@ export const AssetViewer: React.FC<AssetViewerProps> = ({ asset, onClose }) => {
       document.body.style.overflow = 'unset';
     };
   }, [asset, onClose]);
+
+  // Convert PDF data URL to blob URL for reliable rendering in WebView2
+  useEffect(() => {
+    if (asset?.type === 'pdf' && asset.source.kind === 'file') {
+      const dataUrl = asset.source.dataUrl;
+      
+      // Extract base64 data from data URL
+      if (dataUrl.startsWith('data:')) {
+        try {
+          const base64Data = dataUrl.split(',')[1];
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+          setPdfBlobUrl(blobUrl);
+        } catch (error) {
+          console.error('Failed to create PDF blob:', error);
+        }
+      }
+    }
+
+    return () => {
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+        setPdfBlobUrl(null);
+      }
+    };
+  }, [asset]);
 
   if (!asset) return null;
 
@@ -82,10 +114,10 @@ export const AssetViewer: React.FC<AssetViewerProps> = ({ asset, onClose }) => {
       case 'pdf':
         return (
           <div className="w-full h-full bg-stone-50">
-            <embed
-              src={asset.source.dataUrl}
-              type="application/pdf"
-              className="w-full h-full"
+            <iframe
+              src={pdfBlobUrl || asset.source.dataUrl}
+              className="w-full h-full border-0"
+              title={asset.name}
             />
           </div>
         );

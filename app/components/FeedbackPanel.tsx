@@ -31,8 +31,8 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const charCount = message.length;
-  const isMessageValid = charCount >= MIN_MESSAGE_LENGTH && charCount <= MAX_MESSAGE_LENGTH;
-  const isFormValid = rating > 0 && isMessageValid;
+  const isMessageValid = message.trim().length >= MIN_MESSAGE_LENGTH && message.trim().length <= MAX_MESSAGE_LENGTH;
+  const isFormValid = rating > 0 && isMessageValid && !isSubmitting;
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -125,7 +125,7 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid || isSubmitting) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -173,6 +173,7 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
         onClose();
       }, 2000);
     } catch (err: any) {
+      console.error('Feedback submission error:', err);
       setError(err.message || 'Could not send feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -266,13 +267,13 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({
               />
               <div className="px-1">
                 <span className={`text-xs transition-colors duration-200 ${
-                  charCount < MIN_MESSAGE_LENGTH 
+                  message.trim().length < MIN_MESSAGE_LENGTH 
                     ? 'text-slate-400' 
                     : 'text-slate-500'
                 }`}>
-                  {charCount < MIN_MESSAGE_LENGTH 
-                    ? `${MIN_MESSAGE_LENGTH - charCount} more characters needed`
-                    : `${charCount} / ${MAX_MESSAGE_LENGTH}`
+                  {message.trim().length < MIN_MESSAGE_LENGTH 
+                    ? `${MIN_MESSAGE_LENGTH - message.trim().length} more characters needed`
+                    : `${message.trim().length} / ${MAX_MESSAGE_LENGTH}`
                   }
                 </span>
               </div>
